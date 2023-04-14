@@ -1,3 +1,4 @@
+import clc from "cli-color";
 const fetchUrl = require("fetch").fetchUrl;
 const config = require('dotenv').config().parsed;
 
@@ -112,7 +113,7 @@ export class Trello {
 
 	log(...args : any[]) {
 		var args2 = Array.from(args);
-		args2.unshift('[Trello]');
+		args2.unshift(clc.cyan('[Trello]'));
 		console.log(...args2);
 	}
 

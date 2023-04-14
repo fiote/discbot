@@ -1,4 +1,6 @@
+import { ExpressServer } from '@classes/express';
 import { REST } from '@discordjs/rest';
+import clc from 'cli-color';
 import { GatewayIntentBits, Routes } from 'discord-api-types/v9';
 import { Client, TextChannel } from 'discord.js';
 import fs from 'fs';
@@ -34,7 +36,6 @@ export default class Disco {
 
 	constructor() {
 		this.log('constructor()');
-		this.log({folder, cmdfolder});
 		Disco.instance = this;
 		this.rest = new REST({ version: '9' }).setToken(envconfig.DISCORD_BOTTOKEN);
 		this.client = new Client({ intents: [ GatewayIntentBits.Guilds ] });
@@ -57,8 +58,9 @@ export default class Disco {
 		});
 	}
 
-	async run() {
+	async init() {
 		this.log('run()');
+		await this.ready();
 		await this.registerCommands();
 		await this.addListeners();
 		await this.sayHello();
@@ -94,10 +96,24 @@ export default class Disco {
 		this.send('moderator-only', `Hello, I'm online from ${hostname}!`);
 	}
 
+	// ===== EXPRESS ROUTES =========================================
+
+	addRoutes(exp: ExpressServer) {
+		exp.app.post('/rename-channel', async (req, res) => {
+			this.log('POST','/rename-channel');
+  			this.log(req.body);
+			if (req.headers.token != envconfig.EXPRESS_TOKEN) return res.send({status: false, body: 'invalid token'});
+			if (req.body.channel) {
+				const g = this.getChannel(req.body.channel);
+				g.setName(req.body.newname);
+			}
+   			res.send({status: true});
+		});
+	}
+
 	// ===== COMMANDS & LISTENERS ===================================
 
 	async getFilesFolder(folder: string) : Promise<string[]> {
-		this.log('getFilesFolder()', folder);
 		const files = await fs.promises.readdir(folder);
 		const result = [] as string[];
 
@@ -110,8 +126,6 @@ export default class Disco {
 				result.push(path.resolve(folder, file));
 			}
 		}
-
-		this.log('->', result.length, 'files');
 
 		return result;
 	}
@@ -129,7 +143,7 @@ export default class Disco {
 		}
 
 		try {
-			console.log(`Started refreshing ${this.commands.length} application (/) commands.`);
+			this.log(`Started refreshing ${this.commands.length} application (/) commands.`);
 
 			// The put method is used to fully refresh all commands in the guild with the current set
 			const data = await this.rest.put(
@@ -137,7 +151,8 @@ export default class Disco {
 				{ body: this.commands.map(x => x.data.toJSON()) },
 			) as any;
 
-			console.log(`Successfully reloaded ${data?.length} application (/) commands.`);
+			this.log(`Successfully reloaded ${data?.length} application (/) commands.`);
+			this.log(data.map((x:any) => x.name).join(', '));
 		} catch (error) {
 			// And of course, make sure you catch and log any errors!
 			console.error(error);
@@ -156,12 +171,12 @@ export default class Disco {
 
 	async addListeners() {
 		this.client.on('interactionCreate', async (interaction : any) => {
-			console.log({commandName: interaction.commandName, cname: interaction.constructor.name});
+			this.log({commandName: interaction.commandName, cname: interaction.constructor.name});
 
 			if (interaction.constructor.name == 'ButtonInteraction') {
 
 				interaction.commandName = interaction.message.interaction?.commandName;
-				console.log('->', interaction.commandName, interaction.customId, typeof interaction.message);
+				this.log('->', interaction.commandName, interaction.customId, typeof interaction.message);
 
 				if (!interaction.commandName) {
 					const data = JSON.stringify(interaction.message, (key, value) =>
@@ -188,6 +203,7 @@ export default class Disco {
 	// ===== MESSAGES ===============================================
 
 	async send(cname: string, content: string) {
+		this.log('send()', cname, content.substring(0, 20));
 		const c = this.getChannel(cname);
 
 		/*
@@ -203,9 +219,8 @@ export default class Disco {
 
 	// ===== CHANNELS ===============================================
 
-
 	getChannel(name: string) {
-		const c = this.client.channels.cache.find((x: any) => x.name == name);
+		const c = this.client.channels.cache.find((x: any) => x.name == name || x.id == name);
 		return this.client.channels.cache.get(c?.id || '') as TextChannel;
 	}
 
@@ -256,7 +271,7 @@ export default class Disco {
 
 	log(...args : any[]) {
 		var args2 = Array.from(args);
-		args2.unshift('[Discord]');
+		args2.unshift(clc.blue('[Discord]'));
 		console.log(...args2);
 	}
 }

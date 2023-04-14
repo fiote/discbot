@@ -1,4 +1,9 @@
 import Disco from "@classes/disco";
+import { ExpressServer } from "@classes/express";
+
+const expserver = new ExpressServer();
+expserver.init();
 
 const disco = new Disco();
-disco.run();
+disco.init();
+disco.addRoutes(expserver);
