@@ -1,10 +1,11 @@
-import { ClientEvents, Client, TextBasedChannelFields, TextChannel, ButtonInteraction } from 'discord.js';
 import { REST } from '@discordjs/rest';
 import { GatewayIntentBits, Routes } from 'discord-api-types/v9';
+import { Client, TextChannel } from 'discord.js';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
-import { Trello } from './trello';
 import { envconfig } from '../config';
+import { Trello } from './trello';
 
 const folder = path.resolve(__dirname);
 const cmdfolder = path.resolve(folder, '..', 'commands');
@@ -28,6 +29,8 @@ export default class Disco {
 	cready : boolean = false;
 	client: Client<boolean>;
 	commands = [] as DiscoCommand[];
+
+	// ===== CORE ===================================================
 
 	constructor() {
 		this.log('constructor()');
@@ -56,9 +59,9 @@ export default class Disco {
 
 	async run() {
 		this.log('run()');
-		await this.test();
 		await this.registerCommands();
 		await this.addListeners();
+		await this.sayHello();
 		// await this.clearChannel('https://discord.com/channels/205484024834162688/878693683015344179/1040387990771486740', 'before');
 	}
 
@@ -73,7 +76,6 @@ export default class Disco {
 		const labels = await board?.getLabels();
 		labels?.forEach(x => console.log(x.id, x.name));
 
-
 		await this.ready();
 
 		this.log('get guild?');
@@ -86,6 +88,13 @@ export default class Disco {
 
 		// this.send(DiscoChannels.TWITCHCHAT, 'testing bot');
 	}
+
+	async sayHello() {
+		const hostname = os.hostname();
+		this.send('moderator-only', `Hello, I'm online from ${hostname}!`);
+	}
+
+	// ===== COMMANDS & LISTENERS ===================================
 
 	async getFilesFolder(folder: string) : Promise<string[]> {
 		this.log('getFilesFolder()', folder);
@@ -106,7 +115,6 @@ export default class Disco {
 
 		return result;
 	}
-
 
 	async registerCommands() {
 		this.log('registerCommands()');
@@ -177,7 +185,9 @@ export default class Disco {
 		});
 	}
 
-	send(cname: string, content: string) {
+	// ===== MESSAGES ===============================================
+
+	async send(cname: string, content: string) {
 		const c = this.getChannel(cname);
 
 		/*
@@ -188,8 +198,11 @@ export default class Disco {
 		].join('\n');
 		*/
 
-		c?.send(content);
+		await c?.send(content);
 	}
+
+	// ===== CHANNELS ===============================================
+
 
 	getChannel(name: string) {
 		const c = this.client.channels.cache.find((x: any) => x.name == name);
