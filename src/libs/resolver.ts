@@ -1,5 +1,5 @@
-import Disco, { DiscoForums } from "@classes/disco";
-import { Trello } from "@classes/trello";
+import Disco, { DiscoForums } from "services/disco";
+import { Trello } from "services/trello";
 import { Client, CommandInteraction, ThreadChannel } from "discord.js";
 
 interface IResolveThread {

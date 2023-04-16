@@ -1,6 +1,6 @@
-import { Trello } from '@classes/trello';
-import Disco from "@classes/disco";
-import { ExpressServer } from "@classes/express";
+import Disco from "services/disco";
+import { ExpressServer } from "services/express";
+import { Trello } from 'services/trello';
 
 // ===== DECLARE ====================================================
 

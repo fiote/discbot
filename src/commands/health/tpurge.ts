@@ -1,4 +1,4 @@
-import { DiscoForums } from "@classes/disco";
+import { DiscoForums } from "services/disco";
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, TextChannel } from 'discord.js';
