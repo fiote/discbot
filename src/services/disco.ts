@@ -62,7 +62,7 @@ export default class Disco {
 		await this.registerCommands();
 		await this.addListeners();
 		this.addRoutes();
-		// await this.sayHello();
+		await this.sayHello();
 	}
 
 	async test() {

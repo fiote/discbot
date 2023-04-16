@@ -30,13 +30,24 @@ export class Trello {
 			this.log(board.data.id, board.data.name);
 		}
 
+		// adding a generic get route so atlassian can verify the webhook
 		process.services.express.app.get('/trelloCallback', async (req, res) => {
-			this.log('got GET webhook', req.body);
 			res.send('hi there!');
 		});
 
+		// actually adding the webhook
 		process.services.express.app.post('/trelloCallback', async (req, res) => {
 			this.log('got POST webhook', req.body);
+			const { model, action } = req.body;
+			if (action.type == 'updateCard') {
+				const { card, listBefore, listAfter } = action.data;
+				this.log('CARD');
+				this.log(card);
+				this.log('LIST BEFORE');
+				this.log(listBefore);
+				this.log('LIST AFTER');
+				this.log(listAfter);
+			}
 			res.json({status: true});
 		});
 
