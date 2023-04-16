@@ -30,8 +30,13 @@ export class Trello {
 			this.log(board.data.id, board.data.name);
 		}
 
+		process.services.express.app.get('/trelloCallback', async (req, res) => {
+			this.log('got GET webhook', req.body);
+			res.send('hi there!');
+		});
+
 		process.services.express.app.post('/trelloCallback', async (req, res) => {
-			this.log('got webhook', req.body);
+			this.log('got POST webhook', req.body);
 			res.json({status: true});
 		});
 
