@@ -57,13 +57,12 @@ export default class Disco {
 	}
 
 	async init() {
-		this.log('run()');
+		this.log('init()');
 		await this.ready();
 		await this.registerCommands();
 		await this.addListeners();
 		this.addRoutes();
-		await this.sayHello();
-		// await this.clearChannel('https://discord.com/channels/205484024834162688/878693683015344179/1040387990771486740', 'before');
+		// await this.sayHello();
 	}
 
 	async test() {

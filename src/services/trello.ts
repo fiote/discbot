@@ -2,6 +2,10 @@ import clc from "cli-color";
 const fetchUrl = require("fetch").fetchUrl;
 const config = require('dotenv').config().parsed;
 
+const models = {
+	'6093e00f7ec1885cd4759058': 'Fiotactics - Unity'
+}
+
 export class Trello {
 
 	apikey: string;
@@ -14,10 +18,33 @@ export class Trello {
 	}
 
 	init() {
-
+		this.log('init()');
+		this.addHooks();
 	}
 
-	// CORE
+
+	async addHooks() {
+		this.log('addHooks()');
+		const boards = await this.getBoards();
+		for (const board of boards) {
+			this.log(board.data.id, board.data.name);
+		}
+
+		process.services.express.app.post('/trelloCallback', async (req, res) => {
+			this.log('got webhook', req.body);
+			res.json({status: true});
+		});
+
+		this.post('webhooks', {
+			description: 'Webhook to watch changes on Fiotactics - Unity',
+			callbackURL: 'https://discbot.fiotactics.com/trelloCallback',
+			idModel: '6093e00f7ec1885cd4759058'
+		}).then(data => {
+			this.log('post() data', data);
+		});
+	}
+
+	// ===== REQUESTS ===============================================
 
 	async request(method: string, endpoint: string, data?: any | undefined) {
 		this.log('request()', method, endpoint, data);
@@ -73,7 +100,7 @@ export class Trello {
 		return this.request('PUT', endpoint, data);
 	}
 
-	// MEMBERS
+	// ===== MEMBERS ================================================
 
 	async me() {
 		this.log('me()');
@@ -86,7 +113,7 @@ export class Trello {
 		return new TrelloMember(rawdata);
 	}
 
-	// BOARDS
+	// ===== BOARDS =================================================
 
 	async getBoards() : Promise<TrelloBoard[]> {
 		this.log('getBoards()');
@@ -100,7 +127,7 @@ export class Trello {
 		return result.find(x => x.matchSearch(query, exact));
 	}
 
-	// CARDS
+	// ===== CARDS ==================================================
 
 	async createCard(data: any) : Promise<TrelloCard> {
 		this.log('createCard()', data);
