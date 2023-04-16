@@ -39,8 +39,7 @@ export const resolveThread = async ({ client, interaction, symbol, content, newl
 	if (mentions.length) {
 		mentions.sort((a, b) => b.qty - a.qty);
 		const mention = mentions[0];
-		const trello = new Trello();
-		const board = await trello.findBoard(forum.board);
+		const board = await process.services.trello.findBoard(forum.board);
 		const card = await board?.findCard(mention.id);
 
 

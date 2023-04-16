@@ -1,4 +1,3 @@
-import { ExpressServer } from '@classes/express';
 import { REST } from '@discordjs/rest';
 import clc from 'cli-color';
 import { GatewayIntentBits, Routes } from 'discord-api-types/v9';
@@ -7,7 +6,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { envconfig } from '../config';
-import { Trello } from './trello';
 
 const folder = path.resolve(__dirname);
 const cmdfolder = path.resolve(folder, '..', 'commands');
@@ -63,6 +61,7 @@ export default class Disco {
 		await this.ready();
 		await this.registerCommands();
 		await this.addListeners();
+		this.addRoutes();
 		await this.sayHello();
 		// await this.clearChannel('https://discord.com/channels/205484024834162688/878693683015344179/1040387990771486740', 'before');
 	}
@@ -71,9 +70,8 @@ export default class Disco {
 		this.log('test()');
 		return;
 
-		const trello = new Trello();
 
-		const board = await trello.findBoard('unity',false);
+		const board = await process.services.trello.findBoard('unity',false);
 
 		const labels = await board?.getLabels();
 		labels?.forEach(x => console.log(x.id, x.name));
@@ -98,8 +96,8 @@ export default class Disco {
 
 	// ===== EXPRESS ROUTES =========================================
 
-	addRoutes(exp: ExpressServer) {
-		exp.app.post('/rename-channel', async (req, res) => {
+	addRoutes() {
+		process.services.express.app.post('/rename-channel', async (req, res) => {
 			this.log('POST','/rename-channel');
   			this.log(req.body);
 			if (req.headers.token != envconfig.EXPRESS_TOKEN) return res.send({status: false, body: 'invalid token'});

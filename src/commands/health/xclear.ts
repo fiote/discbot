@@ -1,7 +1,6 @@
-import { ButtonStyle, PermissionFlagsBits } from "discord-api-types/v10";
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, Client, CommandInteraction, TextChannel, ThreadChannel, ThreadChannelResolvable } from 'discord.js';
-import { DiscoForums } from "@classes/disco";
+import { ButtonStyle, PermissionFlagsBits } from "discord-api-types/v10";
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, Client, CommandInteraction, TextChannel } from 'discord.js';
 
 module.exports = {
 	data: new SlashCommandBuilder()

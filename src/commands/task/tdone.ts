@@ -1,6 +1,6 @@
-import { PermissionFlagsBits } from "discord-api-types/v10";
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
+import { PermissionFlagsBits } from "discord-api-types/v10";
+import { Client, CommandInteraction } from 'discord.js';
 import { resolveThread } from "libs/resolver";
 
 const content = '[Resolvido localmente (vai subir na próxima build)! #XXX]';
@@ -13,6 +13,7 @@ module.exports = {
 		.setDescription(`Marca um bug/sugestão como ${symbol} ${content}.`)
 		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 	async execute(client: Client, interaction: CommandInteraction) {
+
 		await resolveThread({
 			client,
 			interaction,
@@ -20,5 +21,6 @@ module.exports = {
 			content,
 			newlist
 		});
+
 	},
 };

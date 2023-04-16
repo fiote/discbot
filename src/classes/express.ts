@@ -1,9 +1,8 @@
-import express, { Express } from "express";
-import compression from "compression";
-import cors from "cors";
-import { envconfig } from "config";
 import clc from "cli-color";
-import disco from "./disco";
+import compression from "compression";
+import { envconfig } from "config";
+import cors from "cors";
+import express, { Express } from "express";
 
 export class ExpressServer {
 

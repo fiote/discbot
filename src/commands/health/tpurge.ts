@@ -1,7 +1,7 @@
-import { GatewayIntentBits, PermissionFlagsBits } from "discord-api-types/v10";
-import { SlashCommandBuilder } from '@discordjs/builders';
-import { Client, CommandInteraction, TextChannel, ThreadChannel, ThreadChannelResolvable } from 'discord.js';
 import { DiscoForums } from "@classes/disco";
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { PermissionFlagsBits } from "discord-api-types/v10";
+import { Client, CommandInteraction, TextChannel } from 'discord.js';
 
 module.exports = {
 	data: new SlashCommandBuilder()

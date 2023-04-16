@@ -1,7 +1,8 @@
-import { PermissionFlagsBits } from "discord-api-types/v10";
-import { SlashCommandBuilder } from '@discordjs/builders';
-import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 import Disco, { DiscoForums } from "@classes/disco";
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { PermissionFlagsBits } from "discord-api-types/v10";
+import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
+import { resolveThread } from "libs/resolver";
 
 const action = '[Vamos fazer isso sim, mas sem criar uma task pra isso -> arquivado]';
 const symbol = '🟩';

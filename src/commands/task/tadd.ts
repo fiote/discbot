@@ -1,8 +1,7 @@
-import { PermissionFlagsBits } from "discord-api-types/v10";
-import { SlashCommandBuilder } from '@discordjs/builders';
-import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
-import { Trello } from "@classes/trello";
 import Disco, { DiscoForums } from "@classes/disco";
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { PermissionFlagsBits } from "discord-api-types/v10";
+import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 
 const action = '[Adicionado ao trello! #XXX]';
 const symbol = '⬜';
@@ -32,8 +31,7 @@ module.exports = {
 			idMembers: ['54e0c4db6934d7a27c2c3938'],
 		};
 
-		const trello = new Trello();
-		const card = await trello.createCard(data);
+		const card = await process.services.trello.createCard(data);
 
 		const name = Disco.prependSymbol(symbol, ch.name);
 		await ch.edit({ name });

@@ -1,5 +1,5 @@
-import { PermissionFlagsBits } from "discord-api-types/v10";
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 
 module.exports = {

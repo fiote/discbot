@@ -1,7 +1,7 @@
-import { PermissionFlagsBits } from "discord-api-types/v10";
-import { SlashCommandBuilder } from '@discordjs/builders';
-import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 import Disco, { DiscoForums } from "@classes/disco";
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { PermissionFlagsBits } from "discord-api-types/v10";
+import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 
 const action = '[Talvez vamos fazer isso, mas não agora -> arquivado]';
 const symbol = '🟩';

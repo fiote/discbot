@@ -1,8 +1,7 @@
-import { ButtonStyle, PermissionFlagsBits } from "discord-api-types/v10";
+import { DiscoForums } from "@classes/disco";
 import { channelMention, SlashCommandBuilder } from '@discordjs/builders';
-import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, Client, CommandInteraction, TextChannel, ThreadChannel } from 'discord.js';
-import { Trello } from "@classes/trello";
-import Disco, { DiscoForums } from "@classes/disco";
+import { ButtonStyle, PermissionFlagsBits } from "discord-api-types/v10";
+import { ActionRowBuilder, ButtonBuilder, ButtonInteraction, Client, CommandInteraction, TextChannel } from 'discord.js';
 
 
 module.exports = {

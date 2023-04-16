@@ -1,8 +1,7 @@
-import { PermissionFlagsBits } from "discord-api-types/v10";
-import { SlashCommandBuilder } from '@discordjs/builders';
-import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 import Disco, { DiscoForums } from "@classes/disco";
-import { Trello } from "@classes/trello";
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { PermissionFlagsBits } from "discord-api-types/v10";
+import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 
 const action = '[Resolvendo agora! #XXX]';
 const symbol = '⬜';
@@ -39,8 +38,7 @@ module.exports = {
 		mentions.sort((a, b) => b.qty - a.qty);
 		const mention = mentions[0];
 
-		const trello = new Trello();
-		const board = await trello.findBoard(forum.board);
+		const board = await process.services.trello.findBoard(forum.board);
 		const card = await board?.findCard(mention.id);
 
 		if (!card) return await interaction.editReply({ content: 'Card #'+mention.id+' não encontrado no trello.' });
