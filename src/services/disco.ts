@@ -376,10 +376,9 @@ export default class Disco {
 			symbol = '🟨';
 		}
 
-		if (symbol) {
-			await this.renameThread(thread, Disco.prependSymbol(symbol, thread.name));
-			await this.send(thread.id, `**${author}** moveu o card #${card_id} do trello para a lista **[${listAfter}]**.`);
-		}
+		if (symbol) await this.renameThread(thread, Disco.prependSymbol(symbol, thread.name));
+
+		await this.send(thread.id, `**${author}** moveu o card #${card_id} do trello para a lista **[${listAfter}]**.`);
 	}
 
 	// ===== LOG ====================================================
