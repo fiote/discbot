@@ -1,5 +1,6 @@
 import { REST } from '@discordjs/rest';
 import clc from 'cli-color';
+const fetchUrl = require("fetch").fetchUrl;
 import { GatewayIntentBits, Routes } from 'discord-api-types/v9';
 import { channelMention, Client, TextChannel, ThreadChannel } from 'discord.js';
 import fs from 'fs';
@@ -62,8 +63,9 @@ export default class Disco {
 		await this.ready();
 		await this.registerCommands();
 		await this.addListeners();
-		this.addRoutes();
+		await this.addRoutes();
 		await this.sayHello();
+		await this.setupGaming();
 		await this.test();
 	}
 
@@ -103,29 +105,25 @@ export default class Disco {
 
 	// ===== EXPRESS ROUTES =========================================
 
-	addRoutes() {
-		process.services.express.app.post('/rename-channel', async (req, res) => {
-			this.log('POST','/rename-channel');
-  			this.log(req.body);
-			if (req.headers.token != envconfig.EXPRESS_TOKEN) return res.send({status: false, body: 'invalid token'});
-			if (req.body.channel) {
-				const g = this.getChannel(req.body.channel);
-				if (g) {
-					this.log('found channel, renaming to', req.body.newname);
-					g.setName(req.body.newname).then(result => {
-						this.log('renamed?', result);
-						const g2 = this.getChannel(req.body.channel);
-						this.log('channel2 name is now', g2?.name);
-					}).catch(err => {
-						this.log('error renaming', err);
-					});
-				} else {
-					this.log('channel not found');
-				}
-			} else {
-				this.log('body.channel is empty');
-			}
+	async addRoutes() {
+		process.services.express.app.post('/test', async (req, res) => {
    			res.send({status: true});
+		});
+	}
+
+	// ===== GAMING =================================================
+
+	async setupGaming() {
+		this.log('setupGaming()');
+		setInterval(() => this.updateOnlinePlayers(), 1000 * 60);
+	}
+
+	updateOnlinePlayers() {
+		this.log('updateOnlinePlayers()');
+		fetchUrl('https://api.fiotactics.com/info/online', { method: 'GET', headers: {}, body: null }, (err: any, meta: any, feed: any) => {
+			const list = JSON.parse(feed.toString());
+			const g = this.getChannel('1096276077212618752');
+			g.setName('Players Online: '+list.length);
 		});
 	}
 
