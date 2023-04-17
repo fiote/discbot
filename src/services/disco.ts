@@ -112,14 +112,13 @@ export default class Disco {
 				const g = this.getChannel(req.body.channel);
 				if (g) {
 					this.log('found channel, renaming to', req.body.newname);
-					const renamed = await g.setName(req.body.newname);
-					this.log('renamed?', renamed);
-					const g2 = this.getChannel(req.body.channel);
-					if (g2) {
-						this.log('channel2 name is now', g2.name);
-					} else {
-						this.log('channel2 not found');
-					}
+					g.setName(req.body.newname).then(result => {
+						this.log('renamed?', result);
+						const g2 = this.getChannel(req.body.channel);
+						this.log('channel2 name is now', g2?.name);
+					}).catch(err => {
+						this.log('error renaming', err);
+					});
 				} else {
 					this.log('channel not found');
 				}
