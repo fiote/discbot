@@ -110,7 +110,14 @@ export default class Disco {
 			if (req.headers.token != envconfig.EXPRESS_TOKEN) return res.send({status: false, body: 'invalid token'});
 			if (req.body.channel) {
 				const g = this.getChannel(req.body.channel);
-				g.setName(req.body.newname);
+				if (g) {
+					this.log('found channel, renaming to', req.body.newname);
+					await g.setName(req.body.newname);
+				} else {
+					this.log('channel not found');
+				}
+			} else {
+				this.log('body.channel is empty');
 			}
    			res.send({status: true});
 		});
