@@ -2,10 +2,6 @@ import clc from "cli-color";
 const fetchUrl = require("fetch").fetchUrl;
 const config = require('dotenv').config().parsed;
 
-const models = {
-	'6093e00f7ec1885cd4759058': 'Fiotactics - Unity'
-}
-
 export class Trello {
 
 	apikey: string;
@@ -38,16 +34,14 @@ export class Trello {
 		// actually adding the webhook
 		process.services.express.app.post('/trelloCallback', async (req, res) => {
 			this.log('got POST webhook', req.body);
-			const { model, action } = req.body;
+			const { action } = req.body;
+
 			if (action.type == 'updateCard') {
 				const { card, listBefore, listAfter } = action.data;
-				this.log('CARD');
-				this.log(card);
-				this.log('LIST BEFORE');
-				this.log(listBefore);
-				this.log('LIST AFTER');
-				this.log(listAfter);
+				const { fullname } = action.memberCreator;
+				process.services.discord.notifyCardMove(card.id, fullname, listBefore.name, listAfter.name);
 			}
+
 			res.json({status: true});
 		});
 

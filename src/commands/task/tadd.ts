@@ -1,4 +1,4 @@
-import Disco, { DiscoForums } from "services/disco";
+import Disco, { ForumToList } from "services/disco";
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
@@ -14,14 +14,14 @@ module.exports = {
 	async execute(client: Client, interaction: CommandInteraction) {
 		await interaction.deferReply();
 
-		const ch = await client.channels.fetch(interaction.channelId) as ThreadChannel;
-		const forum = ch.parentId ? DiscoForums[ch.parentId] : null;
+		const thread = await client.channels.fetch(interaction.channelId) as ThreadChannel;
+		const forum = thread.parentId ? ForumToList[thread.parentId] : null;
 
 		if (!forum) return await interaction.reply({ content: 'Você só pode usar esse comando num fórum.' });
-		const message = await fetchMessage(ch, interaction);
+		const message = await fetchMessage(thread, interaction);
 
 		let data = {
-			name: ch.name,
+			name: thread.name,
 			desc: message.content,
 			pos: 'top',
 			idList: forum.list,
@@ -33,8 +33,8 @@ module.exports = {
 
 		const card = await process.services.trello.createCard(data);
 
-		const name = Disco.prependSymbol(symbol, ch.name);
-		await ch.edit({ name });
+		const name = Disco.prependSymbol(symbol, thread.name)+' #'+card.idShort;
+		await thread.edit({ name });
 
 		const content = Disco.prependSymbol(symbol, action.replace('#XXX', '#'+card.idShort));
 		await interaction.editReply({ content });

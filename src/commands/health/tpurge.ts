@@ -1,4 +1,4 @@
-import { DiscoForums } from "services/disco";
+import { ForumToList } from "services/disco";
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, TextChannel } from 'discord.js';
@@ -15,7 +15,7 @@ module.exports = {
 		const ch = await client.channels.fetch(interaction.channelId) as TextChannel;
 		if (ch.id != '1018261249940787311') return await interaction.editReply({ content: 'Você só pode usar esse comando no #moderator-only.' });
 
-		const keys = Object.keys(DiscoForums);
+		const keys = Object.keys(ForumToList);
 		const dtnow = new Date().getTime();
 
 		const deleted = [] as string[];

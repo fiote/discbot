@@ -1,7 +1,7 @@
 import { REST } from '@discordjs/rest';
 import clc from 'cli-color';
 import { GatewayIntentBits, Routes } from 'discord-api-types/v9';
-import { Client, TextChannel } from 'discord.js';
+import { channelMention, Client, TextChannel, ThreadChannel } from 'discord.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -15,11 +15,12 @@ export const DiscoChannels = {
 	TWITCHCHAT: "chat-da-twitch"
 };
 
-export const DiscoForums = {
-	'1020091951086829668': {board:'6093e00f7ec1885cd4759058', list: '609742fabf8e0f586f0d30d7', label: '6190ab3a65bf7137462757d6'}, // {list: "To Do", label: "Changes"}
-	'1020091702368817253': {board:'6093e00f7ec1885cd4759058', list: '625c189b4310bd33c4e21ff2', label: '6190ab01f2328d6f86e64bf8'}, // {list: "Queued", label: "Bug"}
+export const ForumToList = {
+	// SUGESTÕES: {board: "FioTactics - Unity", list: "To Do", label: "Changes"}
+	'1020091951086829668': {board:'6093e00f7ec1885cd4759058', list: '609742fabf8e0f586f0d30d7', label: '6190ab3a65bf7137462757d6'},
+	// BUGS-E-ERROS: {board: "FioTactics - Unity", list: "Queued", label: "Bug"}
+	'1020091702368817253': {board:'6093e00f7ec1885cd4759058', list: '625c189b4310bd33c4e21ff2', label: '6190ab01f2328d6f86e64bf8'},
 } as Record<string, {board: string, list: string, label: string}>;
-
 
 export default class Disco {
 
@@ -63,11 +64,18 @@ export default class Disco {
 		await this.addListeners();
 		this.addRoutes();
 		await this.sayHello();
+		await this.test();
 	}
 
 	async test() {
 		this.log('test()');
+
 		return;
+
+		const threads = await this.getThreads();
+		for (const thread of threads) await this.getMentionedCard(thread, true);
+
+		this.log('Feito!');
 
 
 		const board = await process.services.trello.findBoard('unity',false);
@@ -264,6 +272,116 @@ export default class Disco {
 		client.login(envconfig.DISCORD_BOTTOKEN);
 	}
 
+	// ===== THREADS ================================================
+
+	async getThreads() {
+		const keys = Object.keys(ForumToList);
+
+		const list = [] as ThreadChannel[];
+		const ids = [] as string[];
+
+		for (const channel_id of keys) {
+			const ch2 = await this.client.channels.fetch(channel_id) as TextChannel;
+
+			const archived = await ch2.threads.fetchArchived({limit: 100});
+			const active = await ch2.threads.fetchActive();
+			const threads = archived.threads.concat(active.threads);
+
+			for(const th of threads) {
+				const entry = th[1];
+				const id = entry.id;
+				if (!ids.includes(id)) {
+					ids.push(id);
+					list.push(entry);
+				}
+			}
+		}
+
+		return list;
+	}
+
+	getThreadsByStatus = async (statuses: StatusData) => {
+		const threads = await this.getThreads();
+
+		const result = {
+		} as Record<string, string[]>;
+
+
+		for(const thread of threads) {
+			const status = statuses.find(x => thread.name.startsWith(x.color))?.code || 'unknown';
+			const list = result[status] || [];
+			list.push(channelMention(thread.id));
+			result[status] = list;
+		}
+
+		for (const status of statuses) {
+			const list = result[status.code] || [];
+			if (list.length == 0) continue;
+			status.label = status.color+' '+status.code.toUpperCase()+' ('+list.length+')';
+		}
+
+		return result;
+	}
+
+	async getMentionedCard(thread: ThreadChannel, updateIfNeeded: boolean = false) : Promise<string | null> {
+		const regex = /[^<](#\d{1,5})/gm;
+		const match = thread.name.match(regex);
+		const id_title = match?.[0]?.replace('#', '')?.trim();
+
+		if (id_title) return id_title;
+
+		const messages = await thread.messages.fetch({});
+		const mentions = [] as { id: string, qty: number }[];
+
+		messages.forEach(x => {
+			const match = x.content.match(regex);
+			const id = match?.[0]?.replace('#', '')?.trim();
+			if (id) {
+				const mid = mentions.find(x => x.id === id);
+				if (mid) mid.qty++; else mentions.push({ id, qty: 1 });
+			}
+		});
+
+		mentions.sort((a, b) => b.qty - a.qty);
+		const id_body = mentions[0]?.id?.trim();
+
+		if (id_body && updateIfNeeded) await this.renameThread(thread, `${thread.name} #${id_body}`);
+
+		return id_body;
+	}
+
+	async renameThread(thread: ThreadChannel, newname: string) {
+		const wasArchived = thread.archived;
+		if (wasArchived) await thread.setArchived(false);
+		await thread.setName(newname);
+		if (wasArchived) await thread.setArchived(true);
+	}
+
+	// ===== CARDS ==================================================
+
+	async notifyCardMove(card_id: number, author: string, listBefore: string, listAfter: string) {
+		this.log('notifyCardMove()', {card_id, author, listBefore, listAfter});
+
+		const threads = await this.getThreads();
+		const thread = threads.find(x => x.name.includes('#'+card_id));
+		if (!thread) return;
+
+		let symbol = '';
+
+		if (listAfter == 'Doing') {
+			symbol = '⬜';
+		}
+
+		if (listAfter == 'Done') {
+			symbol = '🟨';
+		}
+
+		if (symbol) {
+			await this.renameThread(thread, Disco.prependSymbol(symbol, thread.name));
+			await this.send(thread.id, `**${author}** moveu o card #${card_id} do trello para a lista **[${listAfter}]**.`);
+		}
+	}
+
 	// ===== LOG ====================================================
 
 	log(...args : any[]) {
@@ -277,3 +395,10 @@ export interface DiscoCommand {
 	data: any,
 	execute: (client: Client<boolean>, interaction: any) => Promise<void>
 }
+
+
+export type StatusData = {
+    code: string;
+    color: string;
+	label?: string;
+}[];

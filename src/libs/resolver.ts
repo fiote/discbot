@@ -1,4 +1,4 @@
-import Disco, { DiscoForums } from "services/disco";
+import Disco, { ForumToList } from "services/disco";
 import { Trello } from "services/trello";
 import { Client, CommandInteraction, ThreadChannel } from "discord.js";
 
@@ -16,7 +16,7 @@ export const resolveThread = async ({ client, interaction, symbol, content, newl
 	const ch = await client.channels.fetch(interaction.channelId) as ThreadChannel;
 
 	const messages = await ch.messages.fetch({});
-	const forum = ch.parentId ? DiscoForums[ch.parentId] : null;
+	const forum = ch.parentId ? ForumToList[ch.parentId] : null;
 
 	if (!forum) return await interaction.editReply({ content: 'Você só pode usar esse comando num fórum.' });
 

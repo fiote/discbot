@@ -1,4 +1,4 @@
-import Disco, { DiscoForums } from "services/disco";
+import Disco, { ForumToList } from "services/disco";
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
@@ -15,15 +15,15 @@ module.exports = {
 	async execute(client: Client, interaction: CommandInteraction) {
 		await interaction.deferReply();
 
-		const cardid = interaction.options.get("cardid")?.value;
+		const card_id = interaction.options.get("cardid")?.value;
 
-		const ch = await client.channels.fetch(interaction.channelId) as ThreadChannel;
-		const forum = ch.parentId ? DiscoForums[ch.parentId] : null;
+		const thread = await client.channels.fetch(interaction.channelId) as ThreadChannel;
+		const forum = thread.parentId ? ForumToList[thread.parentId] : null;
 
 		if (!forum) return await interaction.editReply({ content: 'Você só pode usar esse comando num fórum.' });
-		await ch.edit({ name: `${symbol} ${ch.name}` });
+		await thread.edit({ name: `${symbol} ${thread.name}` });
 
-		const content = Disco.prependSymbol(symbol, action.replace('#XXX', '#'+cardid));
+		const content = Disco.prependSymbol(symbol, action.replace('#XXX', '#'+card_id));
 		await interaction.editReply({ content });
 	},
 };
