@@ -38,8 +38,8 @@ export class Trello {
 
 			if (action.type == 'updateCard') {
 				const { card, listBefore, listAfter } = action.data;
-				const { fullname } = action.memberCreator;
-				process.services.discord.notifyCardMove(card.id, fullname, listBefore.name, listAfter.name);
+				const { fullName } = action.memberCreator;
+				process.services.discord.notifyCardMove(card.shortId, fullName, listBefore.name, listAfter.name);
 			}
 
 			res.json({status: true});
