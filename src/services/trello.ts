@@ -33,12 +33,13 @@ export class Trello {
 
 		// actually adding the webhook
 		process.services.express.app.post('/trelloCallback', async (req, res) => {
-			this.log('got POST webhook', req.body);
+			this.log('got POST webhook'); //, req.body);
 			const { action } = req.body;
 
 			if (action.type == 'updateCard') {
 				const { card, listBefore, listAfter } = action.data;
 				const { fullName } = action.memberCreator;
+				this.log(card);
 				process.services.discord.notifyCardMove(card.shortId, fullName, listBefore.name, listAfter.name);
 			}
 
