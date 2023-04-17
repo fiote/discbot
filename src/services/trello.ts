@@ -40,7 +40,7 @@ export class Trello {
 				const { card, listBefore, listAfter } = action.data;
 				const { fullName } = action.memberCreator;
 				this.log(card);
-				process.services.discord.notifyCardMove(card.shortId, fullName, listBefore.name, listAfter.name);
+				process.services.discord.notifyCardMove(card.idShort, fullName, listBefore?.name, listAfter?.name);
 			}
 
 			res.json({status: true});
