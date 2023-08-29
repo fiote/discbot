@@ -98,6 +98,39 @@ export default class Disco {
 		// this.send(DiscoChannels.TWITCHCHAT, 'testing bot');
 	}
 
+	async addSuggestionReactions(thread: ThreadChannel) {
+		await this.removeThreadReactions(thread);
+		await this.addThreadReactions(thread, ['😍', '🤨', '🤢']);
+	}
+
+	async addThreadReactions(thread: ThreadChannel, reactions: string[]) {
+		try {
+			this.log('addThreadReactions()', thread.id, thread.name, reactions);
+			const message = await thread.fetchStarterMessage();
+			const arquived = thread.archived;
+			if (arquived) await thread.setArchived(false);
+			for (const reaction of reactions) await message?.react(reaction);
+			if (arquived) await thread.setArchived(true);
+		} catch(e) {
+
+		}
+	}
+
+	async removeThreadReactions(thread: ThreadChannel) {
+		this.log('removeThreadReactions()', thread.id, thread.name);
+		try {
+			const message = await thread.fetchStarterMessage();
+			const reactions = message?.reactions.cache.map(x => ({emoji: x.emoji?.name, count: x.count}));
+			if (reactions?.length) {
+				const arquived = thread.archived;
+				if (arquived) await thread.setArchived(false);
+				await message?.reactions.removeAll();
+				if (arquived) await thread.setArchived(true);
+			}
+		} catch(e) {
+
+		}
+	}
 	async sayHello() {
 		const hostname = os.hostname();
 		this.send('moderator-only', `Hello, I'm online from ${hostname}!`);
