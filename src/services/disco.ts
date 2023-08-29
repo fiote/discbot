@@ -49,7 +49,11 @@ export default class Disco {
 		this.log('constructor()');
 		Disco.instance = this;
 		this.rest = new REST({ version: '9' }).setToken(envconfig.DISCORD_BOTTOKEN);
-		this.client = new Client({ intents: [ GatewayIntentBits.Guilds ] });
+		this.client = new Client({ intents: [
+			GatewayIntentBits.Guilds ,
+			GatewayIntentBits.GuildMessages,
+			GatewayIntentBits.GuildMessageReactions
+		] });
 		this.client.login(envconfig.DISCORD_BOTTOKEN);
 	}
 
