@@ -234,6 +234,12 @@ export default class Disco {
 	}
 
 	async addListeners() {
+		this.client.on(Events.ThreadCreate, async (thread: ThreadChannel) => {
+			if (thread.parentId == DiscoLists.SUGESTOES) {
+				this.addSuggestionReactions(thread);
+			}
+		});
+
 		this.client.on('interactionCreate', async (interaction : any) => {
 			this.log({commandName: interaction.commandName, cname: interaction.constructor.name});
 
