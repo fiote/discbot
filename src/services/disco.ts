@@ -1,12 +1,12 @@
 import { REST } from '@discordjs/rest';
 import clc from 'cli-color';
-const fetchUrl = require("fetch").fetchUrl;
 import { GatewayIntentBits, Routes } from 'discord-api-types/v9';
-import { channelMention, Client, TextChannel, ThreadChannel } from 'discord.js';
+import { AnyThreadChannel, channelMention, Client, Collection, Events, TextChannel, ThreadChannel } from 'discord.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { envconfig } from '../config';
+const fetchUrl = require("fetch").fetchUrl;
 
 const folder = path.resolve(__dirname);
 const cmdfolder = path.resolve(folder, '..', 'commands');
@@ -27,19 +27,19 @@ export const DiscoLists = {
 
 export const ForumToList = {
 	// SUGESTÕES: {board: "FioTactics - Unity", list: "To Do", label: "Changes"}
-	[DiscoLists.SUGESTOES]: {board:'6093e00f7ec1885cd4759058', list: '609742fabf8e0f586f0d30d7', label: '6190ab3a65bf7137462757d6'},
+	[DiscoLists.SUGESTOES]: { board: '6093e00f7ec1885cd4759058', list: '609742fabf8e0f586f0d30d7', label: '6190ab3a65bf7137462757d6' },
 	// BUGS-E-ERROS: {board: "FioTactics - Unity", list: "Queued", label: "Bug"}
-	[DiscoLists.BUGS]: {board:'6093e00f7ec1885cd4759058', list: '625c189b4310bd33c4e21ff2', label: '6190ab01f2328d6f86e64bf8'},
+	[DiscoLists.BUGS]: { board: '6093e00f7ec1885cd4759058', list: '625c189b4310bd33c4e21ff2', label: '6190ab01f2328d6f86e64bf8' },
 	// TESTES
-	[DiscoLists.TESTES]: {board:'', list: '', label: ''}
-} as Record<string, {board: string, list: string, label: string}>;
+	[DiscoLists.TESTES]: { board: '', list: '', label: '' }
+} as Record<string, { board: string, list: string, label: string }>;
 
 export default class Disco {
 
-	static instance : Disco;
+	static instance: Disco;
 
 	rest: REST;
-	cready : boolean = false;
+	cready: boolean = false;
 	client: Client<boolean>;
 	commands = [] as DiscoCommand[];
 
@@ -49,15 +49,17 @@ export default class Disco {
 		this.log('constructor()');
 		Disco.instance = this;
 		this.rest = new REST({ version: '9' }).setToken(envconfig.DISCORD_BOTTOKEN);
-		this.client = new Client({ intents: [
-			GatewayIntentBits.Guilds ,
-			GatewayIntentBits.GuildMessages,
-			GatewayIntentBits.GuildMessageReactions
-		] });
+		this.client = new Client({
+			intents: [
+				GatewayIntentBits.Guilds,
+				GatewayIntentBits.GuildMessages,
+				GatewayIntentBits.GuildMessageReactions
+			]
+		});
 		this.client.login(envconfig.DISCORD_BOTTOKEN);
 	}
 
-	async ready() : Promise<void> {
+	async ready(): Promise<void> {
 		this.log('ready()');
 		return new Promise(resolve => {
 			if (this.cready) {
@@ -86,16 +88,20 @@ export default class Disco {
 
 	async test() {
 		this.log('test()');
-
 		return;
 
-		const threads = await this.getThreads();
-		for (const thread of threads) await this.getMentionedCard(thread, true);
+		const threads = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
+
+		for (const thread of threads) {
+			await this.addSuggestionReactions(thread);
+		}
 
 		this.log('Feito!');
 
+		return;
 
-		const board = await process.services.trello.findBoard('unity',false);
+
+		const board = await process.services.trello.findBoard('unity', false);
 
 		const labels = await board?.getLabels();
 		labels?.forEach(x => console.log(x.id, x.name));
@@ -126,7 +132,7 @@ export default class Disco {
 			if (arquived) await thread.setArchived(false);
 			for (const reaction of reactions) await message?.react(reaction);
 			if (arquived) await thread.setArchived(true);
-		} catch(e) {
+		} catch (e) {
 
 		}
 	}
@@ -135,17 +141,18 @@ export default class Disco {
 		this.log('removeThreadReactions()', thread.id, thread.name);
 		try {
 			const message = await thread.fetchStarterMessage();
-			const reactions = message?.reactions.cache.map(x => ({emoji: x.emoji?.name, count: x.count}));
+			const reactions = message?.reactions.cache.map(x => ({ emoji: x.emoji?.name, count: x.count }));
 			if (reactions?.length) {
 				const arquived = thread.archived;
 				if (arquived) await thread.setArchived(false);
 				await message?.reactions.removeAll();
 				if (arquived) await thread.setArchived(true);
 			}
-		} catch(e) {
+		} catch (e) {
 
 		}
 	}
+
 	async sayHello() {
 		const hostname = os.hostname();
 		this.send('moderator-only', `Hello, I'm online from ${hostname}!`);
@@ -155,7 +162,7 @@ export default class Disco {
 
 	async addRoutes() {
 		process.services.express.app.post('/test', async (req, res) => {
-   			res.send({status: true});
+			res.send({ status: true });
 		});
 	}
 
@@ -171,13 +178,13 @@ export default class Disco {
 		fetchUrl('https://api.fiotactics.com/info/online', { method: 'GET', headers: {}, body: null }, (err: any, meta: any, feed: any) => {
 			const list = JSON.parse(feed.toString());
 			const g = this.getChannel('1096276077212618752');
-			g.setName('Players Online: '+list.length);
+			g.setName('Players Online: ' + list.length);
 		});
 	}
 
 	// ===== COMMANDS & LISTENERS ===================================
 
-	async getFilesFolder(folder: string) : Promise<string[]> {
+	async getFilesFolder(folder: string): Promise<string[]> {
 		const files = await fs.promises.readdir(folder);
 		const result = [] as string[];
 
@@ -216,19 +223,19 @@ export default class Disco {
 			) as any;
 
 			this.log(`Successfully reloaded ${data?.length} application (/) commands.`);
-			this.log(data.map((x:any) => x.name).join(', '));
+			this.log(data.map((x: any) => x.name).join(', '));
 		} catch (error) {
 			// And of course, make sure you catch and log any errors!
 			console.error(error);
 		}
 	}
 
-	static prependSymbol(symbol: string, text: string) : string {
+	static prependSymbol(symbol: string, text: string): string {
 		// text = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])+/gim, '');
-		text = text.replace("🟩","");
-		text = text.replace("⬜","");
-		text = text.replace("🟨","");
-		text = text.replace("🟫","");
+		text = text.replace("🟩", "");
+		text = text.replace("⬜", "");
+		text = text.replace("🟨", "");
+		text = text.replace("🟫", "");
 		text = `${symbol} ${text}`;
 		return text.replace(/\s+/g, ' ');
 	}
@@ -240,8 +247,8 @@ export default class Disco {
 			}
 		});
 
-		this.client.on('interactionCreate', async (interaction : any) => {
-			this.log({commandName: interaction.commandName, cname: interaction.constructor.name});
+		this.client.on('interactionCreate', async (interaction: any) => {
+			this.log({ commandName: interaction.commandName, cname: interaction.constructor.name });
 
 			if (interaction.constructor.name == 'ButtonInteraction') {
 
@@ -253,7 +260,7 @@ export default class Disco {
 						typeof value === 'bigint'
 							? value.toString()
 							: value // return everything else unchanged
-					, 2);
+						, 2);
 					fs.writeFileSync('interaction.json', data);
 				}
 			}
@@ -296,7 +303,7 @@ export default class Disco {
 
 	async clearChannel(linksource: string, direction: 'before' | 'after') {
 		this.log('clearChannel()', linksource, direction.toUpperCase());
-		const client = new Client({ intents: [GatewayIntentBits.Guilds ] });
+		const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 		const [, , , , , channel_id, message_id] = linksource.split('/');
 
@@ -309,21 +316,21 @@ export default class Disco {
 			let dstart = new Date().getTime();
 
 			while (found) {
-				const ms = await g.messages.fetch({limit: 100, [direction]: message_id });
-				console.log({mssize: ms.size});
+				const ms = await g.messages.fetch({ limit: 100, [direction]: message_id });
+				console.log({ mssize: ms.size });
 				found = ms.size > 0;
 				const ps = [] as Promise<any>[];
 				for (let i = 0; i < ms.size; i++) {
 					const m = ms.at(i);
 					if (m?.id && !m?.pinned) {
 						total++;
-						console.log(total+':',m?.id, m?.createdAt, m?.author?.username, m?.content);
+						console.log(total + ':', m?.id, m?.createdAt, m?.author?.username, m?.content);
 						const p = g.messages.delete(m.id).then(() => {
 							let dtnow = new Date().getTime();
-							let duration = dtnow-dstart;
-							let avg = duration/total;
+							let duration = dtnow - dstart;
+							let avg = duration / total;
 							done++;
-							console.log({done, duration, avg});
+							console.log({ done, duration, avg });
 						});
 						ps.push(p);
 					}
@@ -348,7 +355,7 @@ export default class Disco {
 		const realLimit = limit;
 		if (limit < 2) limit = 2;
 
-		this.log('getThreads()', {keys, limit});
+		this.log('getThreads()', { keys, limit });
 
 		for (const channel_id of keys) {
 			const ch2 = await this.client.channels.fetch(channel_id) as TextChannel;
@@ -360,11 +367,11 @@ export default class Disco {
 				threads = threads.concat(active.threads);
 			}
 			if (getArchived) {
-				const archived = await ch2.threads.fetchArchived({limit});
+				const archived = await ch2.threads.fetchArchived({ limit });
 				threads = threads.concat(archived.threads);
 			}
 
-			for(const th of threads) {
+			for (const th of threads) {
 				const entry = th[1];
 				const id = entry.id;
 				if (!ids.includes(id)) {
@@ -384,7 +391,7 @@ export default class Disco {
 		} as Record<string, string[]>;
 
 
-		for(const thread of threads) {
+		for (const thread of threads) {
 			const status = statuses.find(x => thread.name.startsWith(x.color))?.code || 'unknown';
 			const list = result[status] || [];
 			list.push(channelMention(thread.id));
@@ -394,13 +401,13 @@ export default class Disco {
 		for (const status of statuses) {
 			const list = result[status.code] || [];
 			if (list.length == 0) continue;
-			status.label = status.color+' '+status.code.toUpperCase()+' ('+list.length+')';
+			status.label = status.color + ' ' + status.code.toUpperCase() + ' (' + list.length + ')';
 		}
 
 		return result;
 	}
 
-	async getMentionedCard(thread: ThreadChannel, updateIfNeeded: boolean = false) : Promise<string | null> {
+	async getMentionedCard(thread: ThreadChannel, updateIfNeeded: boolean = false): Promise<string | null> {
 		const regex = /[^<](#\d{1,5})/gm;
 		const match = thread.name.match(regex);
 		const id_title = match?.[0]?.replace('#', '')?.trim();
@@ -437,10 +444,10 @@ export default class Disco {
 	// ===== CARDS ==================================================
 
 	async notifyCardMove(card_id: number, author: string, listBefore: string, listAfter: string) {
-		this.log('notifyCardMove()', {card_id, author, listBefore, listAfter});
+		this.log('notifyCardMove()', { card_id, author, listBefore, listAfter });
 
 		const threads = await this.getThreads();
-		const thread = threads.find(x => x.name.includes('#'+card_id));
+		const thread = threads.find(x => x.name.includes('#' + card_id));
 		if (!thread) return;
 
 		let symbol = '';
@@ -460,7 +467,7 @@ export default class Disco {
 
 	// ===== LOG ====================================================
 
-	log(...args : any[]) {
+	log(...args: any[]) {
 		var args2 = Array.from(args);
 		args2.unshift(clc.blue('[Discord]'));
 		console.log(...args2);
@@ -474,7 +481,7 @@ export interface DiscoCommand {
 
 
 export type StatusData = {
-    code: string;
-    color: string;
+	code: string;
+	color: string;
 	label?: string;
 }[];
