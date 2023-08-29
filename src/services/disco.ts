@@ -88,47 +88,42 @@ export default class Disco {
 
 	async test() {
 		this.log('test()');
-		return;
 
+		/*
 		const threads = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
+		const total = threads.length;
 
+		let i = 0;
 		for (const thread of threads) {
+			i++;
+			this.log(`${i}/${total}`, thread.id, thread.name);
 			await this.addSuggestionReactions(thread);
 		}
+		*/
 
 		this.log('Feito!');
+	}
 
-		return;
-
-
-		const board = await process.services.trello.findBoard('unity', false);
-
-		const labels = await board?.getLabels();
-		labels?.forEach(x => console.log(x.id, x.name));
-
-		await this.ready();
-
-		this.log('get guild?');
-		const guild = await this.client.guilds.fetch(envconfig.DISCORD_GUILDID);
-		console.log(guild);
-
-		this.log('get role?');
-		const role = await guild.roles.cache.find(x => x.name == 'Admin');
-		console.log(role);
-
-		// this.send(DiscoChannels.TWITCHCHAT, 'testing bot');
+	async execUnlocked(thread: ThreadChannel, callback: (thread: ThreadChannel) => Promise<void>) {
+		this.log('execUnlocked()', thread.id, thread.name);
+		const arquived = thread.archived;
+		if (arquived) await thread.setArchived(false);
+		await callback(thread);
+		if (arquived) await thread.setArchived(true);
 	}
 
 	async addSuggestionReactions(thread: ThreadChannel) {
-		await this.removeThreadReactions(thread);
-		await this.addThreadReactions(thread, ['😍', '🤨', '🤢']);
+		await this.execUnlocked(thread, async (thread) => {
+			await this.removeThreadReactions(thread, false);
+			await this.addThreadReactions(thread, ['🤨', '😍', '🤢'], false);
+		});
 	}
 
-	async addThreadReactions(thread: ThreadChannel, reactions: string[]) {
+	async addThreadReactions(thread: ThreadChannel, reactions: string[], checklock: boolean = false) {
 		try {
 			this.log('addThreadReactions()', thread.id, thread.name, reactions);
 			const message = await thread.fetchStarterMessage();
-			const arquived = thread.archived;
+			const arquived = checklock && thread.archived;
 			if (arquived) await thread.setArchived(false);
 			for (const reaction of reactions) await message?.react(reaction);
 			if (arquived) await thread.setArchived(true);
@@ -137,13 +132,13 @@ export default class Disco {
 		}
 	}
 
-	async removeThreadReactions(thread: ThreadChannel) {
+	async removeThreadReactions(thread: ThreadChannel, checklock: boolean = false) {
 		this.log('removeThreadReactions()', thread.id, thread.name);
 		try {
 			const message = await thread.fetchStarterMessage();
 			const reactions = message?.reactions.cache.map(x => ({ emoji: x.emoji?.name, count: x.count }));
 			if (reactions?.length) {
-				const arquived = thread.archived;
+				const arquived = checklock && thread.archived;
 				if (arquived) await thread.setArchived(false);
 				await message?.reactions.removeAll();
 				if (arquived) await thread.setArchived(true);
