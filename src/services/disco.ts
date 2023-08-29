@@ -90,27 +90,26 @@ export default class Disco {
 		this.log('test()');
 
 		/*
-		const threads = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
-		const total = threads.length;
+		const sugestoes = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
+		const totalsugs = sugestoes.length;
 
 		let i = 0;
-		for (const thread of threads) {
+		for (const thread of sugestoes) {
 			i++;
-			this.log(`${i}/${total}`, thread.id, thread.name);
-			await this.addSuggestionReactions(thread);
+			this.log(`[SUG] ${i}/${totalsugs}`, thread.id, thread.name);
+			 await this.addSuggestionReactions(thread);
 		}
+		*/
 
-		const threads = await this.getThreads(DiscoLists.BUGS, true, true, 100);
-		const total = threads.length;
+		/*
+		const bugs = await this.getThreads(DiscoLists.BUGS, true, true, 100);
+		const totalbugs = bugs.length;
 
-		let i = 0;
-		for (const thread of threads) {
-			i++;
-			this.log(`${i}/${total}`, thread.id, thread.name);
-			await this.execUnlocked(thread, async (thread) => {
-				await this.removeThreadReactions(thread);
-				await this.addThreadReactions(thread, [':fiotebBomb:']);
-			});
+		let j = 0;
+		for (const thread of bugs) {
+			j++;
+			this.log(`[BUG] ${j}/${totalbugs}`, thread.id, thread.name);
+			await this.addBugReactions(thread);
 		}
 		*/
 
