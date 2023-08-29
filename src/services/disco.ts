@@ -99,6 +99,19 @@ export default class Disco {
 			this.log(`${i}/${total}`, thread.id, thread.name);
 			await this.addSuggestionReactions(thread);
 		}
+
+		const threads = await this.getThreads(DiscoLists.BUGS, true, true, 100);
+		const total = threads.length;
+
+		let i = 0;
+		for (const thread of threads) {
+			i++;
+			this.log(`${i}/${total}`, thread.id, thread.name);
+			await this.execUnlocked(thread, async (thread) => {
+				await this.removeThreadReactions(thread);
+				await this.addThreadReactions(thread, [':fiotebBomb:']);
+			});
+		}
 		*/
 
 		this.log('Feito!');
@@ -116,6 +129,13 @@ export default class Disco {
 		await this.execUnlocked(thread, async (thread) => {
 			await this.removeThreadReactions(thread, false);
 			await this.addThreadReactions(thread, ['🤨', '😍', '🤢'], false);
+		});
+	}
+
+	async addBugReactions(thread: ThreadChannel) {
+		await this.execUnlocked(thread, async (thread) => {
+			await this.removeThreadReactions(thread, false);
+			await this.addThreadReactions(thread, [':fiotebBomb:'], false);
 		});
 	}
 
@@ -239,6 +259,9 @@ export default class Disco {
 		this.client.on(Events.ThreadCreate, async (thread: ThreadChannel) => {
 			if (thread.parentId == DiscoLists.SUGESTOES) {
 				this.addSuggestionReactions(thread);
+			}
+			if (thread.parentId == DiscoLists.BUGS) {
+				this.addBugReactions(thread);
 			}
 		});
 
