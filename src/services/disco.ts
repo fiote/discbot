@@ -384,7 +384,7 @@ export default class Disco {
 			for (const th of threads) {
 				const entry = th[1];
 				const id = entry.id;
-				if (!ids.includes(id)) {
+				if (!ids.includes(id) && entry.parentId == channel_id) {
 					ids.push(id);
 					list.push(entry);
 				}
