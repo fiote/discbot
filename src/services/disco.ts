@@ -285,18 +285,30 @@ export default class Disco {
 
 	// ===== THREADS ================================================
 
-	async getThreads() {
-		const keys = Object.keys(ForumToList);
+	async getThreads(channel_id?: string, getActive: boolean = true, getArchived: boolean = true, limit: number = 100) {
+		const keys = channel_id ? [channel_id] : Object.keys(ForumToList);
 
 		const list = [] as ThreadChannel[];
 		const ids = [] as string[];
 
+		const realLimit = limit;
+		if (limit < 2) limit = 2;
+
+		this.log('getThreads()', {keys, limit});
+
 		for (const channel_id of keys) {
 			const ch2 = await this.client.channels.fetch(channel_id) as TextChannel;
 
-			const archived = await ch2.threads.fetchArchived({limit: 100});
-			const active = await ch2.threads.fetchActive();
-			const threads = archived.threads.concat(active.threads);
+			let threads = new Collection<string, AnyThreadChannel<boolean>>();
+
+			if (getActive) {
+				const active = await ch2.threads.fetchActive();
+				threads = threads.concat(active.threads);
+			}
+			if (getArchived) {
+				const archived = await ch2.threads.fetchArchived({limit});
+				threads = threads.concat(archived.threads);
+			}
 
 			for(const th of threads) {
 				const entry = th[1];
