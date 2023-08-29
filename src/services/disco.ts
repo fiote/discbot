@@ -16,11 +16,22 @@ export const DiscoChannels = {
 	TWITCHCHAT: "chat-da-twitch"
 };
 
+export const DiscoLists = {
+	// SUGESTÕES: {board: "FioTactics - Unity", list: "To Do", label: "Changes"}
+	SUGESTOES: '1020091951086829668',
+	// BUGS-E-ERROS: {board: "FioTactics - Unity", list: "Queued", label: "Bug"}
+	BUGS: '1020091702368817253',
+	// TESTES
+	TESTES: '1096604601354043434'
+};
+
 export const ForumToList = {
 	// SUGESTÕES: {board: "FioTactics - Unity", list: "To Do", label: "Changes"}
-	'1020091951086829668': {board:'6093e00f7ec1885cd4759058', list: '609742fabf8e0f586f0d30d7', label: '6190ab3a65bf7137462757d6'},
+	[DiscoLists.SUGESTOES]: {board:'6093e00f7ec1885cd4759058', list: '609742fabf8e0f586f0d30d7', label: '6190ab3a65bf7137462757d6'},
 	// BUGS-E-ERROS: {board: "FioTactics - Unity", list: "Queued", label: "Bug"}
-	'1020091702368817253': {board:'6093e00f7ec1885cd4759058', list: '625c189b4310bd33c4e21ff2', label: '6190ab01f2328d6f86e64bf8'},
+	[DiscoLists.BUGS]: {board:'6093e00f7ec1885cd4759058', list: '625c189b4310bd33c4e21ff2', label: '6190ab01f2328d6f86e64bf8'},
+	// TESTES
+	[DiscoLists.TESTES]: {board:'', list: '', label: ''}
 } as Record<string, {board: string, list: string, label: string}>;
 
 export default class Disco {
