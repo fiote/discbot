@@ -3,6 +3,7 @@ import clc from 'cli-color';
 import { GatewayIntentBits, Routes } from 'discord-api-types/v9';
 import { AnyThreadChannel, channelMention, Client, Collection, Events, TextChannel, ThreadChannel } from 'discord.js';
 import fs from 'fs';
+import { getLastCommitMessage } from 'libs/github';
 import os from 'os';
 import path from 'path';
 import { envconfig } from '../config';
@@ -162,6 +163,8 @@ export default class Disco {
 	async sayHello() {
 		const hostname = os.hostname();
 		this.send('moderator-only', `Hello, I'm online from ${hostname}!`);
+		const lastcommit = await getLastCommitMessage();
+		this.send('moderator-only', `Last commit: ${lastcommit}`);
 	}
 
 	// ===== EXPRESS ROUTES =========================================
