@@ -162,9 +162,8 @@ export default class Disco {
 
 	async sayHello() {
 		const hostname = os.hostname();
-		this.send('moderator-only', `Hello, I'm online from ${hostname}!`);
 		const lastcommit = await getLastCommitMessage();
-		this.send('moderator-only', `Last commit: ${lastcommit}`);
+		this.send('moderator-only', `Hello, I'm online from ${hostname}! Last commit message was: ${lastcommit}`);
 	}
 
 	// ===== EXPRESS ROUTES =========================================
