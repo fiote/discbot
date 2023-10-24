@@ -1,10 +1,10 @@
-import Disco, { ForumToList } from "services/disco";
+import Disco, { DiscoSymbols, ForumToList } from "services/disco";
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 
 const action = '[Adicionado ao trello! #XXX]';
-const symbol = '⬜';
+const symbol = DiscoSymbols.PENDING;
 
 module.exports = {
 	data: new SlashCommandBuilder()

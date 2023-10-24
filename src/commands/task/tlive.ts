@@ -1,10 +1,11 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { DiscoSymbols } from '@services/disco';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction } from 'discord.js';
 import { resolveThread } from "libs/resolver";
 
 const content = '[Resolvido em produção (na versão atual)! #XXX]';
-const symbol = '🟩';
+const symbol = DiscoSymbols.LIVE;
 
 module.exports = {
 	data: new SlashCommandBuilder()
