@@ -1,4 +1,4 @@
-import { ForumToList } from "services/disco";
+import { DiscoSymbols, ForumToList } from "services/disco";
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, TextChannel } from 'discord.js';
@@ -20,7 +20,7 @@ module.exports = {
 
 		const deleted = [] as string[];
 
-		const colors = ['🟩','🟫'];
+		const colors = [DiscoSymbols.LIVE, DiscoSymbols.NOT];
 
 		for (const channel_id of keys) {
 			const ch2 = await client.channels.fetch(channel_id) as TextChannel;
