@@ -17,6 +17,15 @@ export const DiscoChannels = {
 	TWITCHCHAT: "chat-da-twitch"
 };
 
+export const DiscoSymbols = {
+	PENDING: '⬜',
+	DONE: '🟨',
+	LIVE: '🟩',
+	NOT: '🟫',
+	MAYBE: '🟦',
+	MORE: '🟪'
+}
+
 export const DiscoLists = {
 	// SUGESTÕES: {board: "FioTactics - Unity", list: "To Do", label: "Changes"}
 	SUGESTOES: '1020091951086829668',
