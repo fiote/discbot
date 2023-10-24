@@ -3,7 +3,7 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
 
-const action = '[Não vamos fazer isso não -> arquivado]';
+const action = '[Não vamos fazer isso não / Isso não é um bug]';
 const symbol = DiscoSymbols.NOT;
 
 module.exports = {
