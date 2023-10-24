@@ -18,8 +18,8 @@ module.exports = {
 			if (customId == 'yes') {
 				const content = 'TEM CERTEZA MESMO?';
 				const row = new ActionRowBuilder<ButtonBuilder>().addComponents(new ButtonBuilder().setCustomId('iamsure').setLabel('SIM, tenho certeza!').setStyle(ButtonStyle.Danger));
-				await interaction.message.edit({ content, components: [row] });
 				await interaction.deleteReply();
+				await interaction.message.edit({ content, components: [row] });
 				return;
 			}
 			if (customId == 'iamsure') {
