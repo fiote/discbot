@@ -19,11 +19,11 @@ export const DiscoChannels = {
 
 export const DiscoSymbols = {
 	PENDING: '⬜',
+	MORE: '🟪',
 	DONE: '🟨',
 	LIVE: '🟩',
 	NOT: '🟫',
 	MAYBE: '🟦',
-	MORE: '🟪'
 }
 
 export const DiscoLists = {
