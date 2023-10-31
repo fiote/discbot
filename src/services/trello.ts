@@ -138,6 +138,14 @@ export class Trello {
 		return result.find(x => x.matchSearch(query, exact));
 	}
 
+	// ===== LABELS =================================================
+
+	async getLabels(boardid: string) : Promise<TrelloLabel[]> {
+		this.log('getLabels()', boardid);
+		const rawlist = await this.get(`boards/${boardid}/labels`);
+		return rawlist.map((x: any) => new TrelloLabel(x, new TrelloBoard({ id: boardid })));
+	}
+
 	// ===== CARDS ==================================================
 
 	async createCard(data: any) : Promise<TrelloCard> {
