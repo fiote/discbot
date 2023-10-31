@@ -31,6 +31,8 @@ export const DiscoLists = {
 	SUGESTOES: '1020091951086829668',
 	// BUGS-E-ERROS: {board: "FioTactics - Unity", list: "Queued", label: "Bug"}
 	BUGS: '1020091702368817253',
+	// BUGS-OVERLAY
+	BUGS_OVERLAY: '1166784782424879145',
 	// TESTES
 	TESTES: '1096604601354043434'
 };
@@ -40,6 +42,8 @@ export const ForumToList = {
 	[DiscoLists.SUGESTOES]: { board: '6093e00f7ec1885cd4759058', list: '609742fabf8e0f586f0d30d7', label: '6190ab3a65bf7137462757d6' },
 	// BUGS-E-ERROS: {board: "FioTactics - Unity", list: "Queued", label: "Bug"}
 	[DiscoLists.BUGS]: { board: '6093e00f7ec1885cd4759058', list: '625c189b4310bd33c4e21ff2', label: '6190ab01f2328d6f86e64bf8' },
+	// BUGS-OVERLAY
+	[DiscoLists.BUGS_OVERLAY]: {board:'6164b91bcdea1a1d11609d83', list:'61a3dafd6516723613db5fbe', label:'6164b91bec7b9d8da4611bcf'},
 	// TESTES
 	[DiscoLists.TESTES]: { board: '', list: '', label: '' }
 } as Record<string, { board: string, list: string, label: string }>;
