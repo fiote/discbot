@@ -197,8 +197,8 @@ export default class Disco {
 	updateOnlinePlayers() {
 		this.log('updateOnlinePlayers()');
 		fetchUrl('https://api.fiotactics.com/info/online', { method: 'GET', headers: {}, body: null }, (err: any, meta: any, feed: any) => {
-			console.log({err, status: meta.status});
-			if (meta.status != 200) console.log({meta, feed});
+			console.log({err, status: meta?.status});
+			if (meta?.status != 200) console.log({err, meta, feed});
 
 			const list = JSON.parse(feed.toString());
 			const g = this.getChannel('1096276077212618752');
