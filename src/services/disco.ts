@@ -6,7 +6,7 @@ import fs from 'fs';
 import { getLastCommitMessage } from 'libs/github';
 import os from 'os';
 import path from 'path';
-import { envconfig } from '../config';
+import { envconfig, islocal } from '../config';
 const fetchUrl = require("fetch").fetchUrl;
 
 const folder = path.resolve(__dirname);
@@ -92,19 +92,52 @@ export default class Disco {
 	async init() {
 		this.log('init()');
 		await this.ready();
+		await this.purgeMessagesFromChannel(DiscoChannels.MODONLY, 'Hello');
+
+		if (islocal) {
+			await this.test();
+			return;
+		}
+
 		await this.addMissingReactions();
 		await this.registerCommands();
 		await this.addListeners();
 		await this.addRoutes();
 		await this.sayHello();
 		await this.setupGaming();
-		// await this.test();
 	}
 
 	async test() {
 		this.log('test()');
 
 		/*
+		const ch = this.getChannel(DiscoChannels.MODONLY);
+		this.log('MODONLY', ch.guild.id);
+		
+
+		let deleted = 1;
+
+		while (deleted) {
+			const messages = await ch.messages.fetch({limit: 100});
+			const total = messages.size;
+			deleted = 0;		
+				
+			const ps = [] as Promise<any>[];
+			
+			for (const msg of messages.values()) {
+				this.log(msg.id);
+				const p = msg.delete().then(() => {
+					deleted++;
+					this.log(deleted,'/',total);
+				});
+				ps.push(p);
+			}
+
+			await Promise.all(ps);
+		}
+
+		this.log('done deleting');
+
 		const sugestoes = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
 		const totalsugs = sugestoes.length;
 		
@@ -127,7 +160,7 @@ export default class Disco {
 		}
 		*/
 
-		this.log('Feito!');
+		this.log('test done!');
 	}
 
 	async addMissingReactions() {
@@ -367,8 +400,42 @@ export default class Disco {
 		return this.client.channels.cache.get(c?.id || '') as TextChannel;
 	}
 
-	async clearChannel(linksource: string, direction: 'before' | 'after') {
-		this.log('clearChannel()', linksource, direction.toUpperCase());
+	async purgeMessagesFromChannel(chname: string, match: string) {
+		this.log('purgeMessagesFromChannel()', { chname, match });
+
+		const ch = this.getChannel(chname);
+		this.log('channel id', ch.guild.id);
+		
+		let deleted = 1;
+
+		while (deleted) {
+			const messages = await ch.messages.fetch({limit: 100});
+			const total = messages.size;
+			this.log('total found:', total);
+			deleted = 0;		
+				
+			const ps = [] as Promise<any>[];
+			
+			for (const msg of messages.values()) {
+				this.log(msg.id, msg.content);	
+				if (msg.content.includes(match)) {
+					const p = msg.delete().then(() => { 
+						deleted++; 
+						this.log(deleted,'/',total); 
+					}); 
+					ps.push(p);
+				}
+			}
+
+			await Promise.all(ps);
+			this.log(deleted, 'deleted');
+		}
+
+		this.log('done purging!');		
+	}
+
+	async clearChannelFromLinkSource(linksource: string, direction: 'before' | 'after') {
+		this.log('clearChannelFromLinkSource()', linksource, direction.toUpperCase());
 		const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 		const [, , , , , channel_id, message_id] = linksource.split('/');
