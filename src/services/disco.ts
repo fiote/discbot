@@ -240,6 +240,7 @@ export default class Disco {
 				newname = 'Servidor Offline!';
 			}			
 
+			this.log('->', newname);
 			g.setName(newname);
 		})
 	}
