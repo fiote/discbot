@@ -215,18 +215,33 @@ export default class Disco {
 
 	async setupGaming() {
 		this.log('setupGaming()');
-		setInterval(() => this.updateOnlinePlayers(), 1000 * 60);
+		setInterval(() => this.updateOnlinePlayers(), 60 * 1000);
+		this.updateOnlinePlayers();
 	}
 
 	updateOnlinePlayers() {
 		this.log('updateOnlinePlayers()');
 		fetchUrl('https://api.fiotactics.com/info/online', { method: 'GET', headers: {}, body: null }, (err: any, meta: any, feed: any) => {
-			if (feed) {
-				const list = JSON.parse(feed.toString());
-				const g = this.getChannel('1096276077212618752');
-				g.setName('Players Online: ' + list.length);
-			}
-		});
+			let body = feed.toString();
+			const g = this.getChannel('1096276077212618752');
+
+			let newname = '????';
+
+			if (meta.status == 200) {
+				try {
+					const list = JSON.parse(body);
+					newname = 'Players Online: ' + list.length;
+				} catch (e) {
+					console.log(body);
+					console.error(e);					
+					newname = 'Players Online: ERROR';
+				}
+			} else {
+				newname = 'Servidor Offline!';
+			}			
+
+			g.setName(newname);
+		})
 	}
 
 	// ===== COMMANDS & LISTENERS ===================================
