@@ -92,12 +92,13 @@ export default class Disco {
 	async init() {
 		this.log('init()');
 		await this.ready();
+		await this.addMissingReactions();
 		await this.registerCommands();
 		await this.addListeners();
 		await this.addRoutes();
 		await this.sayHello();
 		await this.setupGaming();
-		await this.test();
+		// await this.test();
 	}
 
 	async test() {
@@ -106,16 +107,15 @@ export default class Disco {
 		/*
 		const sugestoes = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
 		const totalsugs = sugestoes.length;
-
+		
 		let i = 0;
 		for (const thread of sugestoes) {
 			i++;
 			this.log(`[SUG] ${i}/${totalsugs}`, thread.id, thread.name);
-			 await this.addSuggestionReactions(thread);
+			const reactions = await this.getThreadReactions(thread);
+			if (!reactions.length) await this.addSuggestionReactions(thread);
 		}
-		*/
 
-		/*
 		const bugs = await this.getThreads(DiscoLists.BUGS, true, true, 100);
 		const totalbugs = bugs.length;
 
@@ -128,6 +128,18 @@ export default class Disco {
 		*/
 
 		this.log('Feito!');
+	}
+
+	async addMissingReactions() {
+		this.log('addMissingReactions()');
+
+		const sugestoes = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
+
+		for (const thread of sugestoes) {
+			const reactions = await this.getThreadReactions(thread);
+			if (!reactions.length) await this.addSuggestionReactions(thread);
+		}
+
 	}
 
 	async execUnlocked(thread: ThreadChannel, callback: (thread: ThreadChannel) => Promise<void>) {
@@ -162,11 +174,23 @@ export default class Disco {
 		}
 	}
 
+	async getThreadReactions(thread: ThreadChannel) {
+		this.log('getThreadReactions()', thread.id, thread.name);
+		try {
+			const message = await thread.fetchStarterMessage();
+			if (!message) return [];
+			const reactions = message?.reactions.cache.map(x => ({ emoji: x.emoji?.name, count: x.count }));
+			return reactions;
+		} catch (e) {
+			return [];
+		}
+	}
+
 	async removeThreadReactions(thread: ThreadChannel, checklock: boolean = false) {
 		this.log('removeThreadReactions()', thread.id, thread.name);
 		try {
 			const message = await thread.fetchStarterMessage();
-			const reactions = message?.reactions.cache.map(x => ({ emoji: x.emoji?.name, count: x.count }));
+			const reactions = await this.getThreadReactions(thread);
 			if (reactions?.length) await message?.reactions.removeAll();
 		} catch (e) {
 
@@ -378,7 +402,6 @@ export default class Disco {
 		const list = [] as ThreadChannel[];
 		const ids = [] as string[];
 
-		const realLimit = limit;
 		if (limit < 2) limit = 2;
 
 		this.log('getThreads()', { keys, limit });
