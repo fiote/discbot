@@ -534,7 +534,7 @@ export default class Disco {
 
 	log(...args: any[]) {
 		var args2 = Array.from(args);
-		args2.unshift(clc.blue('[Discord]'));
+		args2.unshift(clc.blueBright('[Discord]'));
 		console.log(...args2);
 	}
 }
