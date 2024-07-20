@@ -1,16 +1,25 @@
 import clc from "cli-color";
+import { EXPRESS } from "./express";
+import { DISCORD, IForumConfig } from "./disco";
 const fetchUrl = require("fetch").fetchUrl;
 const config = require('dotenv').config().parsed;
+
+export const TRELLO = () => {
+	return Trello.instance;
+}
 
 export class Trello {
 
 	apikey: string;
 	token: string;
+	
+	static instance : Trello;
 
 	constructor(apikey?: string, token?: string) {
 		this.log('constructor()');
 		this.apikey = apikey || config.TRELLO_APIKEY;
 		this.token = token || config.TRELLO_TOKEN;
+		Trello.instance = this;
 	}
 
 	init() {
@@ -27,12 +36,12 @@ export class Trello {
 		}
 
 		// adding a generic get route so atlassian can verify the webhook
-		process.services.express.app.get('/trelloCallback', async (req, res) => {
+		EXPRESS().app.get('/trelloCallback', async (req, res) => {
 			res.send('hi there!');
 		});
 
 		// actually adding the webhook
-		process.services.express.app.post('/trelloCallback', async (req, res) => {
+		EXPRESS().app.post('/trelloCallback', async (req, res) => {
 			this.log('got POST webhook'); //, req.body);
 			const { action } = req.body;
 
@@ -40,7 +49,7 @@ export class Trello {
 				const { card, listBefore, listAfter } = action.data;
 				const { fullName } = action.memberCreator;
 				this.log(card);
-				process.services.discord.notifyCardMove(card.idShort, fullName, listBefore?.name, listAfter?.name);
+				DISCORD().notifyCardMove(card.idShort, fullName, listBefore?.name, listAfter?.name);
 			}
 
 			res.json({status: true});
@@ -202,7 +211,7 @@ export class TrelloBoard {
 	// LISTS
 
 	async getLists() : Promise<TrelloList[]> {
-		const rawlist = await process.services.trello.get(`boards/${this.id}/lists`);
+		const rawlist = await TRELLO().get(`boards/${this.id}/lists`);
 		return rawlist.map((l: any) => new TrelloList(l, this));
 	}
 
@@ -214,7 +223,7 @@ export class TrelloBoard {
 	// CARDS
 
 	async getCards() : Promise<TrelloCard[]> {
-		const rawlist = await process.services.trello.get(`boards/${this.id}/cards`);
+		const rawlist = await TRELLO().get(`boards/${this.id}/cards`);
 		rawlist.sort((a: any, b: any) => a.name < b.name ? -1 : 1);
 		return rawlist.map((c: any) => new TrelloCard(c, this));
 	}
@@ -227,7 +236,7 @@ export class TrelloBoard {
 	// LABELS
 
 	async getLabels() : Promise<TrelloLabel[]> {
-		const rawlist = await process.services.trello.get(`boards/${this.id}/labels`);
+		const rawlist = await TRELLO().get(`boards/${this.id}/labels`);
 		return rawlist.map((l: any) => new TrelloLabel(l, this));
 	}
 
@@ -308,7 +317,7 @@ export class TrelloCard {
 	}
 
 	async retrieveBoard() {
-		const rawdata = await process.services.trello.get(`cards/${this.id}/board`);
+		const rawdata = await TRELLO().get(`cards/${this.id}/board`);
 		this.board = new TrelloBoard(rawdata);
 		return this.board;
 	}
@@ -317,7 +326,8 @@ export class TrelloCard {
 
 	async prependId() {
 		this.name = `${this.idShort} - ${this.name}`;
-		return await process.services.trello.put(`cards/${this.id}`, { name: this.name });
+		return await TRELLO().put(`cards/${this.id}`, { name: this.name });
+	}
 	}
 
 	// LIST
@@ -325,7 +335,7 @@ export class TrelloCard {
 	async moveTo(listname: string) {
 		if (!this.board) await this.retrieveBoard();
 		const list = await this.board?.findList(listname, false);
-		if (list) return await process.services.trello.put(`cards/${this.id}`, { idList: list.id });
+		if (list) return await TRELLO().put(`cards/${this.id}`, { idList: list.id });
 	}
 
 	// LABEL
@@ -333,6 +343,6 @@ export class TrelloCard {
 	async addLabel(tagname: string) {
 		if (!this.board) await this.retrieveBoard();
 		const label = await this.board?.findLabel(tagname, false);
-		return await process.services.trello.post(`cards/${this.id}/idLabels`, { value: label?.id });
+		return await TRELLO().post(`cards/${this.id}/idLabels`, { value: label?.id });
 	}
 }

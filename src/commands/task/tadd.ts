@@ -2,6 +2,7 @@ import Disco, { DiscoSymbols, ForumToList } from "services/disco";
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { PermissionFlagsBits } from "discord-api-types/v10";
 import { Client, CommandInteraction, ThreadChannel } from 'discord.js';
+import { TRELLO } from "@services/trello";
 
 const action = '[Adicionado ao trello! #XXX]';
 const symbol = DiscoSymbols.PENDING;
@@ -30,8 +31,8 @@ module.exports = {
 			dueComplete: false,
 			idMembers: ['54e0c4db6934d7a27c2c3938'],
 		};
-
-		const card = await process.services.trello.createCard(data);
+		
+		const card = await TRELLO().createCard(data);
 
 		const name = Disco.prependSymbol(symbol, thread.name)+' #'+card.idShort;
 		await thread.edit({ name });

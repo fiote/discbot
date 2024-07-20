@@ -4,10 +4,16 @@ import { envconfig } from "config";
 import cors from "cors";
 import express, { Express } from "express";
 
+export const EXPRESS = () => {
+	return ExpressServer.instance;
+}
+
 export class ExpressServer {
 
 	app: Express;
 	port = 2588;
+
+	static instance : ExpressServer;
 
 	constructor() {
 		this.log('constructor()');
@@ -20,6 +26,8 @@ export class ExpressServer {
 
 		this.app.use(cors());
 		this.app.use(express.json());
+
+		ExpressServer.instance = this;
 	}
 
 	init() : Promise<void> {

@@ -7,6 +7,8 @@ import { getLastCommitMessage } from 'libs/github';
 import os from 'os';
 import path from 'path';
 import { envconfig, islocal } from '../config';
+import { EXPRESS } from './express';
+import { TRELLO } from './trello';
 const fetchUrl = require("fetch").fetchUrl;
 
 const folder = path.resolve(__dirname);
@@ -46,7 +48,9 @@ export const ForumToList = {
 	[DiscoLists.BUGS_OVERLAY]: {board:'6164b91bcdea1a1d11609d83', list:'61a3dafd6516723613db5fbe', label:'6164b91bec7b9d8da4611bcf'},
 	// TESTES
 	[DiscoLists.TESTES]: { board: '', list: '', label: '' }
-} as Record<string, { board: string, list: string, label: string }>;
+export const DISCORD = () => {
+	return Disco.instance;
+}
 
 export default class Disco {
 
@@ -239,7 +243,7 @@ export default class Disco {
 	// ===== EXPRESS ROUTES =========================================
 
 	async addRoutes() {
-		process.services.express.app.post('/test', async (req, res) => {
+		EXPRESS().app.post('/test', async (req, res) => {
 			res.send({ status: true });
 		});
 	}

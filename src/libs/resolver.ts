@@ -1,5 +1,5 @@
 import Disco, { ForumToList } from "services/disco";
-import { Trello } from "services/trello";
+import { TRELLO } from "services/trello";
 import { Client, CommandInteraction, ThreadChannel } from "discord.js";
 
 interface IResolveThread {
@@ -39,7 +39,7 @@ export const resolveThread = async ({ client, interaction, symbol, content, newl
 	if (mentions.length) {
 		mentions.sort((a, b) => b.qty - a.qty);
 		const mention = mentions[0];
-		const board = await process.services.trello.findBoard(forum.board);
+		const board = await TRELLO().findBoard(forum.board);
 		const card = await board?.findCard(mention.id);
 
 
