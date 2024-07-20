@@ -115,6 +115,11 @@ export class Trello {
 		return this.request('POST', endpoint, data);
 	}
 
+	async delete(endpoint: string) : Promise<any> {
+		this.log('delete()', endpoint);
+		return this.request('DELETE', endpoint);
+	}
+
 	async put(endpoint: string, data: any) : Promise<any> {
 		this.log('put()', endpoint, data);
 		return this.request('PUT', endpoint, data);
@@ -163,6 +168,11 @@ export class Trello {
 		const card = new TrelloCard(rawdata);
 		await card.prependId();
 		return card;
+	}
+
+	async findCard(forum: IForumConfig, cardId: string) {		
+		const board = await this.findBoard(forum.board);
+		return await board?.findCard(cardId);
 	}
 
 	// ===== LOG ====================================================
@@ -328,6 +338,41 @@ export class TrelloCard {
 		this.name = `${this.idShort} - ${this.name}`;
 		return await TRELLO().put(`cards/${this.id}`, { name: this.name });
 	}
+
+	// DESC
+
+	async setDesc(content?: string) {
+		if (!content) return;
+		return await TRELLO().put(`cards/${this.id}`, { desc: content });
+	}
+
+	// ATTACHMENTS
+
+	async addImage(url: string, name?: string) {
+		return await TRELLO().post(`cards/${this.id}/attachments`, { 
+			url: url,
+			name: name || 'IMAGE',
+			setCover: true		
+		});
+	}
+
+	async setImageDiscord(url: string) {
+		this.addImage(url, 'FromDiscord');
+	}
+
+	async setImage(url: string, name: string) {
+		await this.removeImageByName(name);
+		return await this.addImage(url, name);
+	}
+
+	async getAttachments() {
+		return await TRELLO().get(`cards/${this.id}/attachments`);
+	}
+	
+	async removeImageByName(name: string) {
+		const attachments = await this.getAttachments();
+		const attachment = attachments.find((x: any) => x.name == name);
+		if (attachment) await TRELLO().delete(`cards/${this.id}/attachments/${attachment.id}`);
 	}
 
 	// LIST

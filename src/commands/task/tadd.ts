@@ -16,14 +16,17 @@ module.exports = {
 		await interaction.deferReply();
 
 		const thread = await client.channels.fetch(interaction.channelId) as ThreadChannel;
+		
+		const messages = await thread.messages.fetch({limit: 1, after: '0'});
+		const message = messages.first();
+
 		const forum = thread.parentId ? ForumToList[thread.parentId] : null;
 
 		if (!forum) return await interaction.reply({ content: 'Você só pode usar esse comando num fórum.' });
-		const message = await fetchMessage(thread, interaction);
 
 		let data = {
 			name: thread.name,
-			desc: message.content,
+			desc: message?.content || 'N/A',
 			pos: 'top',
 			idList: forum.list,
 			idLabels: [forum.label],
@@ -33,6 +36,9 @@ module.exports = {
 		};
 		
 		const card = await TRELLO().createCard(data);
+		
+		const images = message?.attachments.map(x => x.url);
+		if (images?.length) await card.setImageDiscord(images[0]);
 
 		const name = Disco.prependSymbol(symbol, thread.name)+' #'+card.idShort;
 		await thread.edit({ name });
@@ -40,14 +46,4 @@ module.exports = {
 		const content = Disco.prependSymbol(symbol, action.replace('#XXX', '#'+card.idShort));
 		await interaction.editReply({ content });
 	},
-};
-
-const fetchMessage = (ch: ThreadChannel<boolean>, interaction: CommandInteraction) : Promise<{content: string}> => {
-	return new Promise(resolve => {
-		ch.messages.fetch(interaction.channelId).then(msg => {
-			resolve(msg);
-		}).catch(err => {
-			resolve({content: 'N/A'});
-		});
-	});
 };

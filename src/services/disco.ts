@@ -48,6 +48,15 @@ export const ForumToList = {
 	[DiscoLists.BUGS_OVERLAY]: {board:'6164b91bcdea1a1d11609d83', list:'61a3dafd6516723613db5fbe', label:'6164b91bec7b9d8da4611bcf'},
 	// TESTES
 	[DiscoLists.TESTES]: { board: '', list: '', label: '' }
+} as Record<string, IForumConfig>;
+
+
+export interface IForumConfig {
+	board: string;
+	list: string;
+	label: string;
+}
+
 export const DISCORD = () => {
 	return Disco.instance;
 }
@@ -96,13 +105,14 @@ export default class Disco {
 	async init() {
 		this.log('init()');
 		await this.ready();
-		await this.purgeMessagesFromChannel(DiscoChannels.MODONLY, 'Hello');
 
 		if (islocal) {
+			this.logbar();
 			await this.test();
 			return;
 		}
 
+		await this.purgeMessagesFromChannel(DiscoChannels.MODONLY, 'Hello');
 		await this.addMissingReactions();
 		await this.registerCommands();
 		await this.addListeners();
@@ -113,6 +123,31 @@ export default class Disco {
 
 	async test() {
 		this.log('test()');
+
+		const threads = await this.getThreads(DiscoLists.BUGS, true, true, 1);
+		
+		let i = 0;
+		for (const thread of threads) {
+			i++;
+			this.logbar();
+			this.log(thread.id, thread.name);
+
+			const cardId = await this.getThreadCardId(thread);
+			const forum = this.getThreadForum(thread);
+			if (!forum) continue;
+
+			const card = await TRELLO().findCard(forum, cardId);
+
+			const messages = await thread.messages.fetch({limit: 1, after: '0'});
+			const message = messages.first();
+
+			const content = message?.content;
+			const images = message?.attachments.map(x => x.url);
+
+			if (content != card?.data.desc) await card?.setDesc(content);			
+			if (images?.length && !card?.data.idAttachmentCover) await card?.setImageDiscord(images[0]);
+		}
+
 
 		/*
 		const ch = this.getChannel(DiscoChannels.MODONLY);
@@ -164,7 +199,9 @@ export default class Disco {
 		}
 		*/
 
+		this.logbar();
 		this.log('test done!');
+		this.logbar();
 	}
 
 	async addMissingReactions() {
@@ -187,6 +224,51 @@ export default class Disco {
 		if (arquived) await thread.setArchived(true);
 	}
 
+	async sayHello() {
+		const hostname = os.hostname();
+		const lastcommit = await getLastCommitMessage();
+		this.send('moderator-only', `Hello, I'm online from ${hostname}! ${lastcommit}`);
+	}
+
+	// ===== THREADS ================================================
+
+	getThreadForum(thread: ThreadChannel) {
+		if (!thread.parentId) return null;
+		const forum = ForumToList[thread.parentId];
+		if (!forum) return null;
+		return forum;
+
+	}
+
+	// ===== THREADS / MENTIONS =====================================
+
+	async getThreadMentions(thread: ThreadChannel) {					
+		const messages = await thread.messages.fetch({});
+
+		const regex = /(#\d{1,5})/gm;
+		const mentions = [] as { id: string, qty: number }[];
+
+		messages.forEach(x => {
+			const match = x.content.match(regex);
+			const id = match?.[0]?.replace('#', '');
+			if (id) {
+				const mid = mentions.find(x => x.id === id);
+				if (mid) mid.qty++; else mentions.push({ id, qty: 1 });
+			}
+		});
+		
+		mentions.sort((a, b) => b.qty - a.qty);
+
+		return mentions;
+	}
+
+	async getThreadCardId(thread: ThreadChannel) {
+		const mentions = await this.getThreadMentions(thread);
+		return mentions[0]?.id;
+	}	
+
+	// ===== THREADS / REACTIONS ====================================
+
 	async addSuggestionReactions(thread: ThreadChannel) {
 		await this.execUnlocked(thread, async (thread) => {
 			await this.removeThreadReactions(thread);
@@ -199,6 +281,17 @@ export default class Disco {
 			await this.removeThreadReactions(thread);
 			await this.addThreadReactions(thread, [':fiotebBomb:']);
 		});
+	}
+
+	async removeThreadReactions(thread: ThreadChannel, checklock: boolean = false) {
+		this.log('removeThreadReactions()', thread.id, thread.name);
+		try {
+			const message = await thread.fetchStarterMessage();
+			const reactions = await this.getThreadReactions(thread);
+			if (reactions?.length) await message?.reactions.removeAll();
+		} catch (e) {
+
+		}
 	}
 
 	async addThreadReactions(thread: ThreadChannel, reactions: string[]) {
@@ -221,23 +314,6 @@ export default class Disco {
 		} catch (e) {
 			return [];
 		}
-	}
-
-	async removeThreadReactions(thread: ThreadChannel, checklock: boolean = false) {
-		this.log('removeThreadReactions()', thread.id, thread.name);
-		try {
-			const message = await thread.fetchStarterMessage();
-			const reactions = await this.getThreadReactions(thread);
-			if (reactions?.length) await message?.reactions.removeAll();
-		} catch (e) {
-
-		}
-	}
-
-	async sayHello() {
-		const hostname = os.hostname();
-		const lastcommit = await getLastCommitMessage();
-		this.send('moderator-only', `Hello, I'm online from ${hostname}! ${lastcommit}`);
 	}
 
 	// ===== EXPRESS ROUTES =========================================
@@ -602,6 +678,10 @@ export default class Disco {
 	}
 
 	// ===== LOG ====================================================
+
+	logbar() {
+		this.log('==============================================================');	
+	}
 
 	log(...args: any[]) {
 		var args2 = Array.from(args);
