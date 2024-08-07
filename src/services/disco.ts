@@ -371,8 +371,11 @@ export default class Disco {
 
 		const method = 'GET';
 		const headers = {'Authorization': 'Bearer ' + envconfig.FIOTACTICS_API_TOKEN};
+		const url = envconfig.FIOTACTICS_API_URL+'/logs/all?afterId='+lastBugReport;
 
-		fetchUrl(envconfig.FIOTACTICS_API_URL+'/logs/all?afterId='+lastBugReport, { method, headers }, (err: any, meta: any, res: any) => {
+		this.log(url);
+
+		fetchUrl(url, { method, headers }, (err: any, meta: any, res: any) => {
 			if (meta?.status != 200) return console.log('bad status', meta?.status);
 			try { this.parseBugReports(JSON.parse(res.toString())); } catch (e) { console.error(e);	}
 		});
