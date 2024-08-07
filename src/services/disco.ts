@@ -9,14 +9,19 @@ import path from 'path';
 import { envconfig, islocal } from '../config';
 import { EXPRESS } from './express';
 import { TRELLO } from './trello';
+import { LocalStorage } from 'node-localstorage';
+
 const fetchUrl = require("fetch").fetchUrl;
 
 const folder = path.resolve(__dirname);
 const cmdfolder = path.resolve(folder, '..', 'commands');
 
+const localStorage = new LocalStorage(path.resolve(__dirname,'..','..','storage','ls'));
+
 export const DiscoChannels = {
 	MODONLY: "moderator-only",
-	TWITCHCHAT: "chat-da-twitch"
+	TWITCHCHAT: "chat-da-twitch",
+	USERS_ONLINE: "1096276077212618752",
 };
 
 export const DiscoSymbols = {
@@ -70,6 +75,10 @@ export default class Disco {
 	client: Client<boolean>;
 	commands = [] as DiscoCommand[];
 
+	static LSKEYS = {
+		LASTBUGREPORT: 'disco-lastBugReport'
+	};
+
 	// ===== CORE ===================================================
 
 	constructor() {
@@ -105,19 +114,14 @@ export default class Disco {
 	async init() {
 		this.log('init()');
 		await this.ready();
-
-		if (islocal) {
-			this.logbar();
-			await this.test();
-			return;
-		}
-
+		/*
 		await this.purgeMessagesFromChannel(DiscoChannels.MODONLY, 'Hello');
 		await this.addMissingReactions();
 		await this.registerCommands();
 		await this.addListeners();
 		await this.addRoutes();
 		await this.sayHello();
+		*/
 		await this.setupGaming();
 	}
 
@@ -328,21 +332,23 @@ export default class Disco {
 
 	async setupGaming() {
 		this.log('setupGaming()');
-		setInterval(() => this.updateOnlinePlayers(), 60 * 1000);
-		this.updateOnlinePlayers();
+		this.intervalCall(() => this.updateOnlinePlayers(), 60 * 1000);
+		this.intervalCall(() => this.getNewBugReports(), 10 * 1000);
 	}
+
+	// ===== GAMING / PLAYERS =======================================
 
 	updateOnlinePlayers() {
 		this.log('updateOnlinePlayers()');
-		fetchUrl('https://api.fiotactics.com/info/online', { method: 'GET', headers: {}, body: null }, (err: any, meta: any, feed: any) => {
-			let body = feed.toString();
-			const g = this.getChannel('1096276077212618752');
-
+		const method = 'GET';
+		const headers = {};
+		const body = null;
+		fetchUrl(envconfig.FIOTACTICS_API_URL+'/info/online', { method, headers, body }, (err: any, meta: any, feed: any) => {
+			const g = this.getChannel(DiscoChannels.USERS_ONLINE);
 			let newname = '????';
-
-			if (meta.status == 200) {
+			if (meta?.status == 200) {
 				try {
-					const list = JSON.parse(body);
+					const list = JSON.parse(feed.toString());
 					newname = 'Players Online: ' + list.length;
 				} catch (e) {
 					console.log(body);
@@ -356,6 +362,53 @@ export default class Disco {
 			this.log('->', newname);
 			g.setName(newname);
 		})
+	}
+
+	// ===== GAMING / BUGS ==========================================
+
+
+	getNewBugReports() {
+		this.log('getNewBugReports()');
+		const lastBugReport = parseInt(localStorage.getItem(Disco.LSKEYS.LASTBUGREPORT) || '0');
+
+		const method = 'GET';
+		const headers = {'Authorization': 'Bearer ' + envconfig.FIOTACTICS_API_TOKEN};
+
+		fetchUrl(envconfig.FIOTACTICS_API_URL+'/logs/all?afterId='+lastBugReport, { method, headers }, (err: any, meta: any, res: any) => {
+			if (meta?.status != 200) return console.log('bad status', meta?.status);
+			try { this.parseBugReports(JSON.parse(res.toString())); } catch (e) { console.error(e);	}
+		});
+	}
+
+	parseBugReports(feed: GetNewBugReportsResponse) {
+		this.log('parseBugReports()', feed.rows.length);
+		if (!feed.rows.length) return;
+
+		let nextLastId = 0;
+		
+		feed.rows.forEach(row => {
+			this.reportBugReport(row);
+			nextLastId = Math.max(nextLastId, row.id);
+		});
+
+		localStorage.setItem(Disco.LSKEYS.LASTBUGREPORT, nextLastId.toString());
+	}
+
+	reportBugReport(row: BugReport) {
+		this.log('reportBugReport()', row.id, row.timestamp, row.tplog, row.comment, row.battle_id, row.attached_file);
+		const g = this.getChannel(DiscoChannels.MODONLY);
+		const icon = (row.tplog == 'game') ? '🎲' : '⚔️';		
+		const url = envconfig.FIOTACTICS_API_URL + '/logs/game/' + row.attached_file;
+		const dtlog = new Date(row.timestamp).toLocaleString('pt-BR');
+		const lines = [
+			`=============================================================`,
+			`# ${icon} Bug Report [${row.id}]`,
+			`* User: ${row.player_name} [${row.player_id}]`,
+			`* Date: ${dtlog}`,
+			`* File: [${row.attached_file}](${url})`,
+			`>>> ${row.comment}`,
+		];
+		g?.send(lines.join('\n'));
 	}
 
 	// ===== COMMANDS & LISTENERS ===================================
@@ -676,6 +729,13 @@ export default class Disco {
 
 		if (listAfter) await this.send(thread.id, `**${author}** moveu o card #${card_id} do trello para a lista **[${listAfter}]**.`);
 	}
+	
+	// ===== MISC ===================================================
+
+	intervalCall(action: () => void, interval: number) {
+		action();
+		return setInterval(action, interval);
+	}
 
 	// ===== LOG ====================================================
 
@@ -701,3 +761,18 @@ export type StatusData = {
 	color: string;
 	label?: string;
 }[];
+
+interface GetNewBugReportsResponse {
+	rows: BugReport[]
+}
+
+interface BugReport {
+	id: number;
+	player_id: number;
+	player_name: number;
+	timestamp: number;
+	tplog: string;
+	comment: string;
+	battle_id: string;
+	attached_file: string;
+}
