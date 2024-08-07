@@ -114,14 +114,12 @@ export default class Disco {
 	async init() {
 		this.log('init()');
 		await this.ready();
-		/*
 		await this.purgeMessagesFromChannel(DiscoChannels.MODONLY, 'Hello');
 		await this.addMissingReactions();
 		await this.registerCommands();
 		await this.addListeners();
 		await this.addRoutes();
 		await this.sayHello();
-		*/
 		await this.setupGaming();
 	}
 
