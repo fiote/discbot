@@ -1,7 +1,7 @@
 import { REST } from '@discordjs/rest';
 import clc from 'cli-color';
 import { GatewayIntentBits, Routes } from 'discord-api-types/v9';
-import { AnyThreadChannel, channelMention, Client, Collection, Events, TextChannel, ThreadChannel } from 'discord.js';
+import { AnyThreadChannel, channelMention, Client, Collection, Events, MessageFlags, TextChannel, ThreadChannel } from 'discord.js';
 import fs from 'fs';
 import { getLastCommitMessage } from 'libs/github';
 import os from 'os';
@@ -127,7 +127,7 @@ export default class Disco {
 		this.log('test()');
 
 		const threads = await this.getThreads(DiscoLists.BUGS, true, true, 1);
-		
+
 		let i = 0;
 		for (const thread of threads) {
 			i++;
@@ -146,7 +146,7 @@ export default class Disco {
 			const content = message?.content;
 			const images = message?.attachments.map(x => x.url);
 
-			if (content != card?.data.desc) await card?.setDesc(content);			
+			if (content != card?.data.desc) await card?.setDesc(content);
 			if (images?.length && !card?.data.idAttachmentCover) await card?.setImageDiscord(images[0]);
 		}
 
@@ -154,17 +154,17 @@ export default class Disco {
 		/*
 		const ch = this.getChannel(DiscoChannels.MODONLY);
 		this.log('MODONLY', ch.guild.id);
-		
+
 
 		let deleted = 1;
 
 		while (deleted) {
 			const messages = await ch.messages.fetch({limit: 100});
 			const total = messages.size;
-			deleted = 0;		
-				
+			deleted = 0;
+
 			const ps = [] as Promise<any>[];
-			
+
 			for (const msg of messages.values()) {
 				this.log(msg.id);
 				const p = msg.delete().then(() => {
@@ -181,7 +181,7 @@ export default class Disco {
 
 		const sugestoes = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
 		const totalsugs = sugestoes.length;
-		
+
 		let i = 0;
 		for (const thread of sugestoes) {
 			i++;
@@ -244,7 +244,7 @@ export default class Disco {
 
 	// ===== THREADS / MENTIONS =====================================
 
-	async getThreadMentions(thread: ThreadChannel) {					
+	async getThreadMentions(thread: ThreadChannel) {
 		const messages = await thread.messages.fetch({});
 
 		const regex = /(#\d{1,5})/gm;
@@ -258,7 +258,7 @@ export default class Disco {
 				if (mid) mid.qty++; else mentions.push({ id, qty: 1 });
 			}
 		});
-		
+
 		mentions.sort((a, b) => b.qty - a.qty);
 
 		return mentions;
@@ -267,7 +267,7 @@ export default class Disco {
 	async getThreadCardId(thread: ThreadChannel) {
 		const mentions = await this.getThreadMentions(thread);
 		return mentions[0]?.id;
-	}	
+	}
 
 	// ===== THREADS / REACTIONS ====================================
 
@@ -350,12 +350,12 @@ export default class Disco {
 					newname = 'Players Online: ' + list.length;
 				} catch (e) {
 					console.log(body);
-					console.error(e);					
+					console.error(e);
 					newname = 'Players Online: ERROR';
 				}
 			} else {
 				newname = 'Servidor Offline!';
-			}			
+			}
 
 			this.log('->', newname);
 			g.setName(newname);
@@ -386,7 +386,7 @@ export default class Disco {
 		if (!feed.rows.length) return;
 
 		let nextLastId = 0;
-		
+
 		feed.rows.forEach(row => {
 			this.reportBugReport(row);
 			nextLastId = Math.max(nextLastId, row.id);
@@ -398,7 +398,7 @@ export default class Disco {
 	reportBugReport(row: BugReport) {
 		this.log('reportBugReport()', row.id, row.timestamp, row.tplog, row.comment, row.battle_id, row.attached_file);
 		const g = this.getChannel(DiscoChannels.MODONLY);
-		const icon = (row.tplog == 'game') ? '🎲' : '⚔️';		
+		const icon = (row.tplog == 'game') ? '🎲' : '⚔️';
 		const url = envconfig.FIOTACTICS_API_URL + '/logs/game/' + row.attached_file;
 		const dtlog = new Date(row.timestamp).toLocaleString('pt-BR');
 		const lines = [
@@ -505,7 +505,7 @@ export default class Disco {
 				await command.execute(this.client, interaction);
 			} catch (error) {
 				console.error(error);
-				await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+				await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
 			}
 		});
 	}
@@ -539,24 +539,24 @@ export default class Disco {
 
 		const ch = this.getChannel(chname);
 		this.log('channel id', ch.guild.id);
-		
+
 		let deleted = 1;
 
 		while (deleted) {
 			const messages = await ch.messages.fetch({limit: 100});
 			const total = messages.size;
 			this.log('total found:', total);
-			deleted = 0;		
-				
+			deleted = 0;
+
 			const ps = [] as Promise<any>[];
-			
+
 			for (const msg of messages.values()) {
-				this.log(msg.id, msg.content);	
+				this.log(msg.id, msg.content);
 				if (msg.content.includes(match)) {
-					const p = msg.delete().then(() => { 
-						deleted++; 
-						this.log(deleted,'/',total); 
-					}); 
+					const p = msg.delete().then(() => {
+						deleted++;
+						this.log(deleted,'/',total);
+					});
 					ps.push(p);
 				}
 			}
@@ -565,7 +565,7 @@ export default class Disco {
 			this.log(deleted, 'deleted');
 		}
 
-		this.log('done purging!');		
+		this.log('done purging!');
 	}
 
 	async clearChannelFromLinkSource(linksource: string, direction: 'before' | 'after') {
@@ -730,7 +730,7 @@ export default class Disco {
 
 		if (listAfter) await this.send(thread.id, `**${author}** moveu o card #${card_id} do trello para a lista **[${listAfter}]**.`);
 	}
-	
+
 	// ===== MISC ===================================================
 
 	intervalCall(action: () => void, interval: number) {
@@ -741,7 +741,7 @@ export default class Disco {
 	// ===== LOG ====================================================
 
 	logbar() {
-		this.log('==============================================================');	
+		this.log('==============================================================');
 	}
 
 	log(...args: any[]) {
