@@ -626,7 +626,7 @@ export default class Disco {
 		for (const channel_id of keys) {
 			const ch2 = await this.client.channels.fetch(channel_id) as TextChannel;
 
-			let threads = new Collection<string, AnyThreadChannel<boolean>>();
+			let threads = new Collection<string, AnyThreadChannel>();
 
 			if (getActive) {
 				const active = await ch2.threads.fetchActive();
