@@ -4,7 +4,8 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"build": "tsc && tsc-alias"
+		"build": "tsc && tsc-alias",
+		"run": "node -r tsconfig-paths/register -r ts-node/register ./src/index.ts --no-warning"
 	},
 	"nodemonConfig": {
 		"watch": [
