@@ -16,6 +16,11 @@ module.exports = {
 		const ch = await client.channels.fetch(interaction.channelId) as ThreadChannel;
 		if (ch.id != '969077856783175772') return await interaction.editReply({ content: 'Você só pode usar esse comando no #avisos-do-jogo.' });
 
-		return await interaction.editReply({ content: `🔷 Server online! Patch de correção **${gameversion}** aplicado com sucesso!`});
+		const lines = [
+			`🔷🇧🇷 Server online! Patch de correção **${gameversion}** aplicado com sucesso!`,
+			`🔷🇺🇸 Server online! Patch **${gameversion}** successfully applied!`,
+		];
+
+		return await interaction.editReply({ content: lines.join('\n') });
 	},
 };

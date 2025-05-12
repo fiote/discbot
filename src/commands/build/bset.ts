@@ -17,6 +17,11 @@ module.exports = {
 		const ch = await client.channels.fetch(interaction.channelId) as ThreadChannel;
 		if (ch.id != '969077856783175772') return await interaction.editReply({ content: 'Você só pode usar esse comando no #avisos-do-jogo.' });
 
-		return await interaction.editReply({ content: `🔶🔶🔶 A build **${gameversion}** deve sair daqui a pouco. O jogo pode ficar indisponível até isso acontecer.`});
+		const lines = [
+			`🔶🔶🔶🇧🇷 A build **${gameversion}** deve sair daqui a pouco. O jogo pode ficar indisponível até isso acontecer.`,
+			`🔶🔶🔶🇺🇸 The build **${gameversion}** should be released soon. The game may be unavailable until this happens.`,
+		];
+
+		return await interaction.editReply({ content: lines.join('\n') });
 	},
 };
