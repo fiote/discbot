@@ -74,6 +74,7 @@ export default class Disco {
 	cready: boolean = false;
 	client: Client<boolean>;
 	commands = [] as DiscoCommand[];
+	messageCache: Map<string, { content: string, timestamp: number }> = new Map(); // Cache to prevent duplicate messages
 
 	static LSKEYS = {
 		LASTBUGREPORT: 'disco-lastBugReport'
@@ -516,13 +517,28 @@ export default class Disco {
 		this.log('send()', cname, content.substring(0, 20));
 		const c = this.getChannel(cname);
 
-		/*
-		content = [
-			'==============================================================',
-			'@here FioTactics | Desenvolvendo um MMORPG ao vivo | Continuando implementação do PVP rankeado',
-			'[STREAM ON] https://twitch.tv/fiotebeardev'
-		].join('\n');
-		*/
+		// Check for duplicate messages in cache (within 30 seconds)
+		const cacheKey = `${cname}:${content}`;
+		const cachedMessage = this.messageCache.get(cacheKey);
+		const currentTime = Date.now();
+
+		if (cachedMessage && (currentTime - cachedMessage.timestamp < 30000)) {
+			this.log('Skipping duplicate message to', cname, '(sent within last 30 seconds)');
+			return;
+		}
+
+		// Add/update message in cache
+		this.messageCache.set(cacheKey, {
+			content,
+			timestamp: currentTime
+		});
+
+		// Clean old cache entries (older than 30 seconds)
+		for (const [key, value] of this.messageCache.entries()) {
+			if (currentTime - value.timestamp > 30000) {
+				this.messageCache.delete(key);
+			}
+		}
 
 		await c?.send(content);
 	}
