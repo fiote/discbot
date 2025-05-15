@@ -77,7 +77,8 @@ export default class Disco {
 	messageCache: Map<string, { content: string, timestamp: number }> = new Map(); // Cache to prevent duplicate messages
 
 	static LSKEYS = {
-		LASTBUGREPORT: 'disco-lastBugReport'
+		LASTBUGREPORT: 'disco-lastBugReport',
+		REACTIONS_ADDED: 'disco-reactions-added',
 	};
 
 	// ===== CORE ===================================================
@@ -207,16 +208,45 @@ export default class Disco {
 		this.logbar();
 	}
 
+	// ===== REACTIONS ==============================================
+
+	loadSavedReactions() {
+		this.log('loadSavedReactions()');
+		const alreadyAdded = JSON.parse(localStorage.getItem(Disco.LSKEYS.REACTIONS_ADDED) || '{}');
+		return alreadyAdded;
+	}
+
+	saveSavedReactions(added: Record<string, string>) {
+		localStorage.setItem(Disco.LSKEYS.REACTIONS_ADDED, JSON.stringify(added, null, 2));
+		return 0;
+	}
+
 	async addMissingReactions() {
 		this.log('addMissingReactions()');
 
 		const sugestoes = await this.getThreads(DiscoLists.SUGESTOES, true, true, 100);
 
+		const saved = this.loadSavedReactions();
+		let stack = 0;
+
 		for (const thread of sugestoes) {
+			if (saved[thread.id]) continue;
+
 			const reactions = await this.getThreadReactions(thread);
-			if (!reactions.length) await this.addSuggestionReactions(thread);
+
+			if (!reactions.length) {
+				await this.addSuggestionReactions(thread);
+				console.log('added new reactions to', thread.id, thread.name);
+			}
+
+			saved[thread.id] = thread.name;
+			stack++;
+
+			if (stack >= 5) stack = this.saveSavedReactions(saved);
 		}
 
+		this.saveSavedReactions(saved);
+		this.log('added reactions to', Object.keys(saved).length, 'threads!')
 	}
 
 	async execUnlocked(thread: ThreadChannel, callback: (thread: ThreadChannel) => Promise<void>) {
@@ -367,14 +397,11 @@ export default class Disco {
 
 
 	getNewBugReports() {
-		this.log('getNewBugReports()');
 		const lastBugReport = parseInt(localStorage.getItem(Disco.LSKEYS.LASTBUGREPORT) || '0');
 
 		const method = 'GET';
 		const headers = {'Authorization': 'Bearer ' + envconfig.FIOTACTICS_API_TOKEN};
 		const url = envconfig.FIOTACTICS_API_URL+'/logs/all?afterId='+lastBugReport;
-
-		this.log(url);
 
 		fetchUrl(url, { method, headers }, (err: any, meta: any, res: any) => {
 			if (meta?.status != 200) return console.log('bad status', meta?.status);
@@ -383,7 +410,6 @@ export default class Disco {
 	}
 
 	parseBugReports(feed: GetNewBugReportsResponse) {
-		this.log('parseBugReports()', feed.rows.length);
 		if (!feed.rows.length) return;
 
 		let nextLastId = 0;
@@ -554,34 +580,32 @@ export default class Disco {
 		this.log('purgeMessagesFromChannel()', { chname, match });
 
 		const ch = this.getChannel(chname);
-		this.log('channel id', ch.guild.id);
 
 		let deleted = 1;
+		let totaldeleted = 0;
+
 
 		while (deleted) {
 			const messages = await ch.messages.fetch({limit: 100});
 			const total = messages.size;
-			this.log('total found:', total);
 			deleted = 0;
 
 			const ps = [] as Promise<any>[];
 
 			for (const msg of messages.values()) {
-				this.log(msg.id, msg.content);
 				if (msg.content.includes(match)) {
 					const p = msg.delete().then(() => {
 						deleted++;
-						this.log(deleted,'/',total);
+						totaldeleted++;
 					});
 					ps.push(p);
 				}
 			}
 
 			await Promise.all(ps);
-			this.log(deleted, 'deleted');
 		}
 
-		this.log('done purging!');
+		this.log(`done purging ${totaldeleted} messages!`);
 	}
 
 	async clearChannelFromLinkSource(linksource: string, direction: 'before' | 'after') {
