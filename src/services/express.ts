@@ -11,7 +11,6 @@ export const EXPRESS = () => {
 export class ExpressServer {
 
 	app: Express;
-	port = 2588;
 
 	static instance : ExpressServer;
 
