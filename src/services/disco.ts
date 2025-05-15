@@ -355,6 +355,35 @@ export default class Disco {
 		EXPRESS().app.post('/test', async (req, res) => {
 			res.send({ status: true });
 		});
+
+		EXPRESS().app.post('/gameserver', async (req, res) => {
+			// get version from params
+			let event = req.body.event;
+			const version = req.body.version;
+			const data = req.body.data;
+			const password = req.body.password;
+
+			if (password != envconfig.GAMESERVER_PASSWORD) {
+				this.log('invalid password');
+				res.status(401);
+				res.send({ status: false, password });
+				return;
+			}
+
+			const dsdata = data ? JSON.stringify(data, null, 2) : '';
+
+			let tag = '';
+			if (event.startsWith('#')) {
+				tag = '# ';
+				event = event.substring(1);
+			}
+
+			let content = `${tag}GameServer [${version}]: ${event}`;
+			if (dsdata) content += '\n```'+dsdata+'```';
+
+			this.send('moderator-only', content);
+			res.send({ status: true });
+		});
 	}
 
 	// ===== GAMING =================================================
