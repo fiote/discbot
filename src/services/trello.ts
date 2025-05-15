@@ -12,7 +12,7 @@ export class Trello {
 
 	apikey: string;
 	token: string;
-	
+
 	static instance : Trello;
 
 	constructor(apikey?: string, token?: string) {
@@ -29,11 +29,8 @@ export class Trello {
 
 
 	async addHooks() {
+		this.logbar();
 		this.log('addHooks()');
-		const boards = await this.getBoards();
-		for (const board of boards) {
-			this.log(board.data.id, board.data.name);
-		}
 
 		// adding a generic get route so atlassian can verify the webhook
 		EXPRESS().app.get('/trelloCallback', async (req, res) => {
@@ -44,6 +41,7 @@ export class Trello {
 		EXPRESS().app.post('/trelloCallback', async (req, res) => {
 			this.log('got POST webhook'); //, req.body);
 			const { action } = req.body;
+			this.log('-> action.type', action.type);
 
 			if (action.type == 'updateCard') {
 				const { card, listBefore, listAfter } = action.data;
@@ -55,19 +53,39 @@ export class Trello {
 			res.json({status: true});
 		});
 
+		this.logbar();
+		this.log('Requesting hooks...');
+		const hooks = await this.get(`tokens/${this.token}/webhooks`);
+
+		// delete all hooks
+		for (const hook of hooks) {
+			this.log('deleting hook', hook.id);
+			await this.delete(`webhooks/${hook.id}`);
+		}
+
+		if (!hooks.length) this.log('no hooks to delete.');
+
+		this.logbar();
+
 		this.post('webhooks', {
 			description: 'Webhook to watch changes on Fiotactics - Unity',
-			callbackURL: 'https://discbot.fiotactics.com/trelloCallback',
+			callbackURL: config.DISCBOT_URL+'/trelloCallback',
 			idModel: '6093e00f7ec1885cd4759058'
 		}).then(data => {
-			this.log('post() data', data);
+			this.log('webhook created');
+			this.log(data);
+		}).catch(err => {
+			this.log('webhook error');
+			this.log(err);
+		}).finally(() => {
+			this.logbar();
 		});
 	}
 
 	// ===== REQUESTS ===============================================
 
 	async request(method: string, endpoint: string, data?: any | undefined) {
-		this.log('request()', method, endpoint, data);
+		this.log('request()', method, endpoint, data ?? '');
 
 		let url = `https://api.trello.com/1/${endpoint}?key=${this.apikey}&token=${this.token}`;
 
@@ -170,7 +188,7 @@ export class Trello {
 		return card;
 	}
 
-	async findCard(forum: IForumConfig, cardId: string) {		
+	async findCard(forum: IForumConfig, cardId: string) {
 		const board = await this.findBoard(forum.board);
 		return await board?.findCard(cardId);
 	}
@@ -181,6 +199,10 @@ export class Trello {
 		var args2 = Array.from(args);
 		args2.unshift(clc.cyan('[Trello]'));
 		console.log(...args2);
+	}
+
+	logbar() {
+		this.log('--------------------------------------------------');
 	}
 
 }
@@ -349,10 +371,10 @@ export class TrelloCard {
 	// ATTACHMENTS
 
 	async addImage(url: string, name?: string) {
-		return await TRELLO().post(`cards/${this.id}/attachments`, { 
+		return await TRELLO().post(`cards/${this.id}/attachments`, {
 			url: url,
 			name: name || 'IMAGE',
-			setCover: true		
+			setCover: true
 		});
 	}
 
@@ -368,7 +390,7 @@ export class TrelloCard {
 	async getAttachments() {
 		return await TRELLO().get(`cards/${this.id}/attachments`);
 	}
-	
+
 	async removeImageByName(name: string) {
 		const attachments = await this.getAttachments();
 		const attachment = attachments.find((x: any) => x.name == name);
