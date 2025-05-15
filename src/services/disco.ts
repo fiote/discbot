@@ -401,8 +401,10 @@ export default class Disco {
 		const method = 'GET';
 		const headers = {};
 		const body = null;
-		fetchUrl(envconfig.FIOTACTICS_API_URL+'/info/online', { method, headers, body }, (err: any, meta: any, feed: any) => {
+		fetchUrl(envconfig.FIOTACTICS_API_URL+'/info/online', { method, headers, body }, async (err: any, meta: any, feed: any) => {
 			const g = this.getChannel(DiscoChannels.USERS_ONLINE);
+			console.log(g?.id, g?.name);
+
 			let newname = '????';
 			if (meta?.status == 200) {
 				try {
@@ -417,12 +419,19 @@ export default class Disco {
 				newname = 'Servidor Offline!';
 			}
 
-			this.log('->', newname);
-			g.setName(newname).then(() => {
-				this.log('->', 'setName()', newname);
-			}).catch((e: any) => {
-				this.log('->', 'setName() ERROR', e);
-			});
+
+			this.logbar();
+			this.log('FROM', g?.name, 'TO', newname);
+
+			try {
+				const gset = await g.setName(newname)
+				this.log('ACCEPTED', gset?.name);
+			} catch (e) {
+				this.log('ERROR', e);
+			}
+
+
+			this.logbar();
 		})
 	}
 
@@ -437,7 +446,7 @@ export default class Disco {
 		const url = envconfig.FIOTACTICS_API_URL+'/logs/all?afterId='+lastBugReport;
 
 		fetchUrl(url, { method, headers }, (err: any, meta: any, res: any) => {
-			if (meta?.status != 200) return console.log('bad status', meta?.status);
+			if (meta?.status != 200) return console.log('getNewBugReports/bad status', meta?.status);
 			try { this.parseBugReports(JSON.parse(res.toString())); } catch (e) { console.error(e);	}
 		});
 	}
