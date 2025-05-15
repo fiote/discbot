@@ -418,7 +418,11 @@ export default class Disco {
 			}
 
 			this.log('->', newname);
-			g.setName(newname);
+			g.setName(newname).then(() => {
+				this.log('->', 'setName()', newname);
+			}).catch((e: any) => {
+				this.log('->', 'setName() ERROR', e);
+			});
 		})
 	}
 
