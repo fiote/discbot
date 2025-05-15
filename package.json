@@ -5,6 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"build": "tsc && tsc-alias",
+		"grok": "ngrok http --url=singular-merely-chicken.ngrok-free.app 4000",
 		"run": "node -r tsconfig-paths/register -r ts-node/register ./src/index.ts --no-warning"
 	},
 	"nodemonConfig": {
